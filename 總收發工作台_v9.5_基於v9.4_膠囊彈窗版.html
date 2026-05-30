@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>總收發工作台 v7 正式穩定版</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft JhengHei",sans-serif}
+body{display:flex;height:100vh;background:#f4f7fb;color:#1f2937;overflow:hidden}
+.sidebar{
+width:56px;
+background:#173153;
+color:#fff;
+padding:16px 8px;
+overflow:hidden;
+transition:.25s;
+position:relative;
+flex-shrink:0;
+}
+
+.sidebar:hover{
+width:320px;
+padding:20px;
+overflow:auto;
+}
+.logo{
+font-size:24px;
+font-weight:bold;
+margin-bottom:24px;
+white-space:nowrap;
+}
+
+.collapsed-logo{
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+.expanded-logo{
+display:none;
+}
+
+.sidebar:hover .collapsed-logo{
+display:none;
+}
+
+.sidebar:hover .expanded-logo{
+display:block;
+}
+
+.sidebar .section,
+.sidebar .nav,
+.sidebar #forecastBox,
+.sidebar .badge,
+.sidebar div[style*="LINE通知"]{
+opacity:0;
+pointer-events:none;
+transition:.15s;
+}
+
+.sidebar:hover .section,
+.sidebar:hover .nav,
+.sidebar:hover #forecastBox,
+.sidebar:hover .badge,
+.sidebar:hover div[style*="LINE通知"]{
+opacity:1;
+pointer-events:auto;
+}
+.section{font-size:13px;opacity:.7;margin:18px 0 10px}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:14px;border-radius:14px;margin-bottom:8px;background:#295287;cursor:pointer;transition:.2s;white-space:nowrap;overflow:hidden}
+.nav:hover{background:#35639c}
+.nav.active{background:#4f7fc0}
+.badge{background:#ffffff22;padding:4px 10px;border-radius:999px}
+.forecast-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;margin-bottom:6px;background:#ffffff10}
+.forecast-today{background:#ffe082;color:#000;font-weight:bold}
+.forecast-danger{background:#7f1d1d}
+.main{flex:1;padding:24px;overflow:auto}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.btn{border:none;padding:11px 16px;border-radius:12px;font-weight:bold;cursor:pointer}
+.green{background:#16a34a;color:#fff}
+.blue{background:#2563eb;color:#fff}
+.red{background:#dc2626;color:#fff}
+.orange{background:#f59e0b;color:#fff}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:18px}
+.card{background:white;padding:20px;border-radius:18px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.card h2{font-size:32px;margin-top:10px}
+.warning{background:#fee2e2;color:#991b1b;padding:14px;border-radius:14px;margin-bottom:18px;font-weight:bold}
+.table-wrap{background:white;padding:20px;border-radius:18px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th:nth-child(1), td:nth-child(1){width:40px}
+th:nth-child(2), td:nth-child(2){
+width:auto;
+}
+th:nth-child(4), td:nth-child(4){
+width:90px;
+white-space:nowrap;
+text-align:center;
+}
+th:nth-child(5), td:nth-child(5),
+th:nth-child(6), td:nth-child(6){
+width:110px;
+white-space:nowrap;
+text-align:center;
+}
+th:nth-child(7), td:nth-child(7){width:120px}
+th:nth-child(8), td:nth-child(8){width:90px}
+th:nth-child(9), td:nth-child(9){width:90px}
+
+td{
+line-height:1.9;
+word-break:break-word;
+vertical-align:top;
+}
+
+th{background:#edf3fb;padding:12px;text-align:left}
+td{padding:12px;border-bottom:1px solid #eee;vertical-align:top}
+.overdue-row{background:#fff1f2}
+.done-row{background:#f0fdf4}
+.pill{padding:8px 14px;border-radius:999px;font-weight:bold;display:inline-block;cursor:pointer;min-width:70px;text-align:center;font-size:14px}
+.send-pill{background:#dbeafe}
+.display-pill{background:#f3f4f6}
+.status-btn{padding:8px 12px;border:none;border-radius:999px;font-weight:bold;cursor:pointer}
+.pending{background:#fef3c7;color:#92400e}
+.done{background:#d1fae5;color:#065f46}
+.note{width:90px;padding:6px;border-radius:10px;border:1px solid #ddd;font-size:13px}
+.hidden-date{position:absolute;opacity:0;width:1px;pointer-events:none}
+.subject-link{
+color:#2563eb;
+text-decoration:none;
+font-weight:600;
+}
+.subject-link:hover{
+text-decoration:underline;
+}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);justify-content:center;align-items:center;z-index:99999}
+.modal-box{background:white;width:900px;max-width:95%;padding:24px;border-radius:20px}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<div class="logo collapsed-logo">
+☰
+</div>
+
+<div class="logo expanded-logo">
+📨 發文工作台
+</div>
+
+<div class="section"><span>工作狀態</span></div>
+
+<div class="nav active" onclick="setFilter('pending',this)">
+<span>待處理發文</span>
+<span class="badge" id="pendingBadge">0</span>
+</div>
+
+<div class="nav" onclick="setFilter('nodate',this)">
+<span>🆕 未設定日期</span>
+<span class="badge" id="nodateBadge">0</span>
+</div>
+
+<div class="nav" onclick="setFilter('today',this)">
+<span>今日發文</span>
+<span class="badge" id="todayBadge">0</span>
+</div>
+
+<div class="nav" onclick="setFilter('overdue',this)">
+<span>已逾期</span>
+<span class="badge" id="overdueBadge">0</span>
+</div>
+
+<div class="nav" onclick="setFilter('done',this)">
+<span>已發文</span>
+<span class="badge" id="doneBadge">0</span>
+</div>
+
+<div class="section"><span>未來一週發文量</span></div>
+
+<div id="forecastBox"></div>
+
+<div class="section"><span>資料管理</span></div>
+
+<div class="nav" onclick="exportBackup()">
+<span>💾 匯出備份</span>
+</div>
+
+<div class="nav" onclick="document.getElementById('backupFile').click()">
+<span>📂 匯入備份</span>
+</div>
+
+
+</div>
+
+<div class="main">
+
+<div class="topbar">
+<h1 id="pageTitle">待處理發文</h1>
+
+<div style="display:flex;gap:10px;">
+<button class="btn blue" onclick="window.open('http://iiseng.sinotech-eng.com/SinoForm/Doc/Dispatch','_blank')">🚀 發文作業</button>
+<button class="btn orange" onclick="openImport()">智慧批次匯入</button>
+<button class="btn green" onclick="batchDone()">✓ 批次已發文</button>
+<button class="btn red" onclick="batchDelete()">🗑 批次刪除</button>
+<input type="file" id="backupFile" accept=".json" style="display:none" onchange="importBackup(event)">
+</div>
+</div>
+
+<div id="warningBox" class="warning" style="display:none"></div>
+
+<div class="cards">
+<div class="card"><p>待處理</p><h2 id="pendingCount">0</h2></div>
+<div class="card"><p>今日發文</p><h2 id="todayCount">0</h2></div>
+<div class="card"><p>已逾期</p><h2 id="overdueCount">0</h2></div>
+<div class="card"><p>已發文</p><h2 id="doneCount">0</h2></div>
+</div>
+
+<div class="table-wrap">
+
+<div class="toolbar">
+<input id="search" placeholder="搜尋文號 / 主旨 / 承辦人" style="padding:10px;border-radius:10px;border:1px solid #ccc;min-width:280px;">
+</div>
+
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>選取</th>
+<th>表單編號</th>
+<th>主旨</th>
+<th>承辦人</th>
+<th>發文日期</th>
+<th>公文顯示日期</th>
+<th>狀態</th>
+<th>備註說明</th>
+<th class="done-column">完成時間</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+<div id="paginationBar" style="margin-top:15px;text-align:center;"></div>
+
+</div>
+
+</div>
+
+<div class="modal" id="importModal">
+<div class="modal-box">
+<h2>智慧批次匯入</h2>
+<div 
+id="importText"
+contenteditable="true"
+style="
+width:100%;
+height:320px;
+padding:12px;
+border-radius:12px;
+border:1px solid #ccc;
+overflow:auto;
+background:white;
+white-space:pre-wrap;
+"></div>
+
+<div style="margin-top:14px;display:flex;gap:10px;">
+<button class="btn green" onclick="confirmImport()">確認匯入</button>
+<button class="btn blue" onclick="closeImport()">關閉</button>
+</div>
+
+</div>
+</div>
+
+<script>
+
+let docs = JSON.parse(localStorage.getItem('dispatch_v7_stable') || '[]');
+let currentFilter = 'pending';
+let currentPage = 1;
+const pageSize = 20;
+
+function save(){
+localStorage.setItem('dispatch_v7_stable',JSON.stringify(docs));
+}
+
+function setFilter(type,el){
+
+currentFilter = type;
+
+document.querySelectorAll('.nav').forEach(v=>v.classList.remove('active'));
+
+el.classList.add('active');
+
+const titles = {
+pending:'待處理發文',
+nodate:'未設定日期',
+today:'今日發文',
+overdue:'已逾期',
+done:'已發文'
+};
+
+document.getElementById('pageTitle').innerText = titles[type];
+
+render();
+
+}
+
+function openImport(){
+document.getElementById('importModal').style.display='flex';
+}
+
+function closeImport(){
+document.getElementById('importModal').style.display='none';
+}
+
+function cleanLine(text){
+return text
+.replace(/\*\*/g,'')
+.replace(/函``/g,'')
+.replace(/\[|\]/g,'')
+.replace(/\(https?:\/\/[^\s]+\)/g,'')
+.replace(/https?:\/\/[^\s]+/g,'')
+.replace(/\s+/g,' ')
+.trim();
+}
+
+
+
+function confirmImport(){
+
+const editor = document.getElementById('importText');
+
+const htmlContent = editor.innerHTML;
+const textContent = editor.innerText;
+
+const parser = new DOMParser();
+const parsed = parser.parseFromString(htmlContent,'text/html');
+
+const links = [...parsed.querySelectorAll('a')];
+
+const urlMap = {};
+
+links.forEach(link=>{
+
+const text = link.innerText.trim();
+const href = link.href;
+
+if(text && href){
+urlMap[text] = href;
+}
+
+});
+
+let lines = textContent.split('\n')
+.map(v=>cleanLine(v))
+.filter(v=>v && v!=='函');
+
+let added = 0;
+let autoDone = 0;
+
+const importedDocNos = [];
+
+for(let i=0;i<lines.length;i++){
+
+if(/^[A-Z0-9]+$/.test(lines[i])){
+
+const projectNo = lines[i];
+const docNo = (lines[i+2] || '').replace(/[^\d]/g,'');
+
+let subject='';
+let handler='';
+let url='';
+
+for(let j=i+3;j<i+8 && j<lines.length;j++){
+
+if(lines[j].length >= 8 && !subject){
+
+subject = lines[j];
+
+Object.keys(urlMap).forEach(key=>{
+
+if(subject.includes(key) || key.includes(subject)){
+url = urlMap[key];
+}
+
+});
+
+continue;
+
+}
+
+if(/^[\u4e00-\u9fa5]{2,4}$/.test(lines[j])){
+handler = lines[j];
+break;
+}
+
+}
+
+if(docNo && subject){
+
+importedDocNos.push(docNo);
+
+const exists = docs.some(v=>v.docNo===docNo);
+
+if(!exists){
+
+docs.push({
+projectNo,
+docNo,
+subject,
+handler,
+sendDate:'',
+displayDate:'',
+status:'待發',
+doneTime:'',
+note:'',
+url:url
+});
+
+added++;
+
+}
+
+}
+
+}
+
+}
+
+docs.forEach(d=>{
+
+if(
+d.status==='待發' &&
+!importedDocNos.includes(d.docNo)
+){
+
+d.status='已發文';
+
+const now = new Date();
+
+d.doneTime =
+now.getFullYear() + '/' +
+String(now.getMonth()+1).padStart(2,'0') + '/' +
+String(now.getDate()).padStart(2,'0') + ' ' +
+String(now.getHours()).padStart(2,'0') + ':' +
+String(now.getMinutes()).padStart(2,'0');
+
+autoDone++;
+
+}
+
+});
+
+save();
+render();
+closeImport();
+
+alert(
+`同步完成
+
+新增：${added} 筆
+自動完成：${autoDone} 筆`
+);
+
+}
+
+
+
+function exportBackup(){
+
+const dataStr = JSON.stringify(docs,null,2);
+
+const blob = new Blob([dataStr],{
+type:'application/json'
+});
+
+const a = document.createElement('a');
+
+const today = new Date();
+
+const fileName =
+'總收發備份_' +
+today.getFullYear() +
+String(today.getMonth()+1).padStart(2,'0') +
+String(today.getDate()).padStart(2,'0') +
+'.json';
+
+a.href = URL.createObjectURL(blob);
+
+a.download = fileName;
+
+a.click();
+
+}
+
+function importBackup(event){
+
+const file = event.target.files[0];
+
+if(!file) return;
+
+const reader = new FileReader();
+
+reader.onload = function(e){
+
+try{
+
+const imported = JSON.parse(e.target.result);
+
+if(!Array.isArray(imported)){
+
+alert('備份格式錯誤');
+return;
+
+}
+
+if(!confirm(`確定匯入 ${imported.length} 筆資料？\n目前資料將被覆蓋。`)){
+return;
+}
+
+docs = imported;
+
+save();
+render();
+
+alert('備份匯入完成');
+
+}catch(err){
+
+alert('JSON格式錯誤');
+
+}
+
+};
+
+reader.readAsText(file);
+
+}
+
+
+function render(){
+
+const tbody = document.getElementById('tbody');
+
+tbody.innerHTML='';
+
+const isDonePage = currentFilter==='done';
+
+document.querySelectorAll('.done-column').forEach(v=>{
+v.style.display = isDonePage ? '' : 'none';
+});
+
+document.querySelectorAll('.done-cell').forEach(v=>{
+v.style.display = isDonePage ? '' : 'none';
+});
+
+
+const now = new Date();
+const todayFull = now.toISOString().split('T')[0];
+const today = String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
+const search = document.getElementById('search').value || '';
+
+let pending=0,nodateCount=0,todayCount=0,overdue=0,done=0;
+
+docs.forEach(v=>{
+if(v.status!=='已發文') pending++;
+if(v.status!=='已發文' && !v.sendDate) nodateCount++;
+if(v.sendDate && v.sendDate.slice(5).replace('-','/')===today && v.status!=='已發文') todayCount++;
+if(v.sendDate && v.sendDate<todayFull && v.status!=='已發文') overdue++;
+if(v.status==='已發文') done++;
+});
+
+let rows = [];
+
+docs.forEach((d,i)=>{
+
+const text = `${d.docNo} ${d.subject} ${d.handler}`;
+
+if(search && !text.includes(search)) return;
+if(currentFilter==='pending' && d.status==='已發文') return;
+if(currentFilter==='nodate' && !(d.status!=='已發文' && !d.sendDate)) return;
+if(currentFilter==='today' && !(d.sendDate && d.sendDate.slice(5).replace('-','/')===today && d.status!=='已發文')) return;
+if(currentFilter==='overdue' && !(d.sendDate && d.sendDate<todayFull && d.status!=='已發文')) return;
+if(currentFilter==='done' && d.status!=='已發文') return;
+
+rows.push({d,i});
+
+});
+
+if(currentFilter==='done'){
+rows.sort((a,b)=>String(b.d.doneTime||'').localeCompare(String(a.d.doneTime||'')));
+}
+
+const totalRows = rows.length;
+
+if(currentFilter==='done'){
+const start=(currentPage-1)*pageSize;
+rows=rows.slice(start,start+pageSize);
+}else{
+currentPage=1;
+}
+
+rows.forEach(({d,i})=>{
+
+const tr = document.createElement('tr');
+
+if(d.status==='已發文'){
+tr.classList.add('done-row');
+}
+
+if(d.sendDate && d.sendDate<todayFull && d.status!=='已發文'){
+tr.classList.add('overdue-row');
+}
+
+if(d.sendDate && d.displayDate && d.sendDate!==d.displayDate){
+tr.style.background='#fff3e0';
+}
+
+tr.innerHTML = `
+<td><input type="checkbox" class="batch-check" data-index="${i}"></td>
+
+<td>${d.docNo}</td>
+
+<td>
+${d.url ? 
+`<a class="subject-link" href="${d.url}" target="_blank">${d.subject}</a>` 
+: d.subject}
+</td>
+
+<td>${d.handler}</td>
+
+<td>
+<div class="pill send-pill" onclick="openDateQuickModal(${i})">
+${d.sendDate ? d.sendDate.replace(/^\d{4}-/,'').replace('-','/') : '未設定'}
+</div>
+<input id="send_${i}" class="hidden-date" type="date" value="${d.sendDate}" onchange="updateSend(${i},this.value)">
+</td>
+
+<td>
+<div class="pill display-pill" onclick="document.getElementById('display_${i}').showPicker()">
+${d.displayDate ? d.displayDate.replace(/^\d{4}-/,'').replace('-','/') : '未設定'}
+</div>
+<input id="display_${i}" class="hidden-date" type="date" value="${d.displayDate}" onchange="updateDisplay(${i},this.value)">
+</td>
+
+<td>
+<select 
+class="status-btn ${d.status==='已發文'?'done':'pending'}"
+onchange="changeStatus(${i},this.value)">
+<option value="待發" ${d.status==='待發'?'selected':''}>待發</option>
+<option value="已發文" ${d.status==='已發文'?'selected':''}>已發文</option>
+</select>
+</td>
+
+<td>
+<input class="note" value="${d.note || ''}" onchange="updateNote(${i},this.value)" placeholder="輸入備註">
+</td>
+
+${isDonePage ? `<td class="done-cell">${d.doneTime || ""}</td>` : ``}
+<td><button class="btn red" style="padding:6px 10px;" onclick="deleteDoc(${i})">🗑</button></td>
+`;
+
+tbody.appendChild(tr);
+
+});
+
+document.getElementById('pendingBadge').innerText=pending;
+document.getElementById('nodateBadge').innerText=nodateCount;
+document.getElementById('todayBadge').innerText=todayCount;
+document.getElementById('overdueBadge').innerText=overdue;
+document.getElementById('doneBadge').innerText=done;
+
+document.getElementById('pendingCount').innerText=pending;
+document.getElementById('todayCount').innerText=todayCount;
+document.getElementById('overdueCount').innerText=overdue;
+document.getElementById('doneCount').innerText=done;
+
+
+
+const warning = document.getElementById('warningBox');
+
+if(overdue>0){
+warning.style.display='block';
+warning.innerText=`⚠ 目前有 ${overdue} 件已逾期未發文`;
+}else{
+warning.style.display='none';
+}
+
+renderForecast();
+
+const pageBar=document.getElementById('paginationBar');
+if(pageBar){
+pageBar.innerHTML='';
+
+if(currentFilter==='done'){
+
+const totalPages=Math.ceil(totalRows/pageSize)||1;
+
+pageBar.innerHTML=`<div style="margin-top:10px;font-weight:bold;">共 ${totalRows} 筆資料　第 ${currentPage} / ${totalPages} 頁</div>`;
+
+const prev=document.createElement('button');
+prev.className='btn blue';
+prev.style.margin='6px';
+prev.textContent='上一頁';
+prev.disabled=currentPage===1;
+prev.onclick=()=>{currentPage--;render();};
+pageBar.appendChild(prev);
+
+for(let p=1;p<=totalPages;p++){
+if(totalPages>10 && !(p<=3 || p>totalPages-3 || p===currentPage)) continue;
+const b=document.createElement('button');
+b.className='btn';
+b.style.margin='3px';
+b.textContent=p;
+b.onclick=()=>{currentPage=p;render();};
+pageBar.appendChild(b);
+}
+
+const next=document.createElement('button');
+next.className='btn blue';
+next.style.margin='6px';
+next.textContent='下一頁';
+next.disabled=currentPage===totalPages;
+next.onclick=()=>{currentPage++;render();};
+pageBar.appendChild(next);
+}
+
+}
+
+}
+
+function renderForecast(){
+
+const box = document.getElementById('forecastBox');
+box.innerHTML='';
+
+const today = new Date();
+
+for(let i=0;i<7;i++){
+
+const d = new Date();
+d.setDate(today.getDate()+i);
+
+const yyyy=d.getFullYear();
+const mm=String(d.getMonth()+1).padStart(2,'0');
+const dd=String(d.getDate()).padStart(2,'0');
+
+const dateStr=`${yyyy}-${mm}-${dd}`;
+
+const count = docs.filter(v=>v.sendDate===dateStr && v.status!=='已發文').length;
+
+const div = document.createElement('div');
+
+div.className='forecast-item';
+
+if(i===0){
+div.classList.add('forecast-today');
+}
+
+if(count>=5){
+div.classList.add('forecast-danger');
+}
+
+div.innerHTML=`<span>${mm}/${dd}</span><span>${count} 件</span>`;
+
+box.appendChild(div);
+
+}
+
+}
+
+
+let activeDateIndex=null;
+
+function openDateQuickModal(i){
+activeDateIndex=i;
+document.getElementById('dateQuickModal').style.display='flex';
+}
+
+function closeDateQuickModal(){
+document.getElementById('dateQuickModal').style.display='none';
+}
+
+function applyCustomDate(){
+const val=document.getElementById('modalDateInput').value;
+if(!val) return;
+updateSend(activeDateIndex,val);
+closeDateQuickModal();
+}
+
+function updateSend(i,val){
+
+docs[i].sendDate=val;
+
+if(!docs[i].displayDate){
+docs[i].displayDate=val;
+}
+
+save();
+render();
+
+}
+
+function quickDate(i,offset){
+
+const d=new Date();
+d.setDate(d.getDate()+offset);
+
+const yyyy=d.getFullYear();
+const mm=String(d.getMonth()+1).padStart(2,'0');
+const dd=String(d.getDate()).padStart(2,'0');
+
+docs[i].sendDate=`${yyyy}-${mm}-${dd}`;
+
+if(!docs[i].displayDate){
+docs[i].displayDate=docs[i].sendDate;
+}
+
+save();
+render();
+}
+
+
+function updateDisplay(i,val){
+docs[i].displayDate=val;
+save();
+render();
+}
+
+function updateNote(i,val){
+docs[i].note=val;
+save();
+}
+
+function changeStatus(i,val){
+
+docs[i].status = val;
+
+if(val==='已發文'){
+
+docs[i].doneTime = new Date().toLocaleString();
+
+}else{
+
+docs[i].doneTime = '';
+
+}
+
+save();
+render();
+
+}
+
+function batchDone(){
+
+const checks = document.querySelectorAll('.batch-check:checked');
+
+checks.forEach(c=>{
+
+const i = Number(c.dataset.index);
+
+docs[i].status='已發文';
+docs[i].doneTime=new Date().toLocaleString();
+
+});
+
+save();
+render();
+
+alert('批次已發文完成');
+
+}
+
+
+
+function deleteDoc(i){
+
+if(confirm('確定刪除這筆資料？')){
+
+docs.splice(i,1);
+
+save();
+render();
+
+}
+
+}
+
+function batchDelete(){
+
+const checks = document.querySelectorAll('.batch-check:checked');
+
+if(checks.length===0){
+
+alert('請先勾選資料');
+return;
+
+}
+
+if(!confirm(`確定刪除 ${checks.length} 筆資料？`)){
+return;
+}
+
+const indexes = [];
+
+checks.forEach(c=>{
+indexes.push(Number(c.dataset.index));
+});
+
+indexes.sort((a,b)=>b-a);
+
+indexes.forEach(i=>{
+docs.splice(i,1);
+});
+
+save();
+render();
+
+alert('批次刪除完成');
+
+}
+
+
+function exportToday(){
+
+const today = new Date().toISOString().split('T')[0];
+
+const rows = docs.filter(v=>v.sendDate===today);
+
+let content = `
+<h1>今日發文單</h1>
+<table border="1" cellspacing="0" cellpadding="8">
+<tr>
+<th>表單編號</th>
+<th>主旨</th>
+<th>承辦人</th>
+</tr>
+`;
+
+rows.forEach(r=>{
+
+content += `
+<tr>
+<td>${r.docNo}</td>
+<td>${r.subject}</td>
+<td>${r.handler}</td>
+</tr>
+`;
+
+});
+
+content += '</table>';
+
+const w = window.open('');
+w.document.write(content);
+w.print();
+
+}
+
+document.getElementById('search').addEventListener('input',render);
+
+(function(){
+const now=new Date();
+const today=String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0');
+const todayFull=now.toISOString().split('T')[0];
+
+const overdueCount=docs.filter(v=>v.sendDate && v.sendDate<todayFull && v.status!=='已發文').length;
+const todayCount=docs.filter(v=>v.sendDate && v.sendDate.slice(5).replace('-','/')===today && v.status!=='已發文').length;
+
+if(overdueCount>0){
+currentFilter='overdue';
+}else if(todayCount>0){
+currentFilter='today';
+}else{
+currentFilter='pending';
+}
+})();
+
+render();
+
+</script>
+
+
+<div class="modal" id="dateQuickModal">
+<div class="modal-box" style="width:380px;">
+<h3 style="margin-bottom:15px;">設定發文日期</h3>
+<div style="display:flex;flex-direction:column;gap:8px;">
+<button class="btn blue" onclick="quickDate(activeDateIndex,0);closeDateQuickModal();">今天</button>
+<button class="btn green" onclick="quickDate(activeDateIndex,1);closeDateQuickModal();">明天</button>
+<button class="btn orange" onclick="quickDate(activeDateIndex,2);closeDateQuickModal();">後天</button>
+<input type="date" id="modalDateInput" style="padding:10px;border:1px solid #ccc;border-radius:8px;">
+<button class="btn" onclick="applyCustomDate()">📅 選擇日期</button>
+<button class="btn red" onclick="closeDateQuickModal()">取消</button>
+</div>
+</div>
+</div>
+
+</body>
+</html>
+
+<style>
+td:nth-child(3){
+min-width:420px;
+line-height:1.9;
+}
+
+td:nth-child(3) a{
+display:block;
+word-break:keep-all;
+}
+</style>
+
+<style>
+.status-btn{
+padding:6px 10px !important;
+font-size:13px;
+width:82px;
+}
+
+td:nth-child(3){
+line-height:1.8;
+}
+
+.table-wrap{
+overflow-x:auto;
+}
+</style>
+
+<style>
+table{
+width:100%;
+border-collapse:collapse;
+table-layout:auto;
+}
+
+th,td{
+padding:14px 10px;
+vertical-align:top;
+}
+
+th:nth-child(1), td:nth-child(1){
+width:36px;
+}
+
+th:nth-child(2), td:nth-child(2){
+width:130px;
+min-width:130px;
+white-space:nowrap;
+word-break:keep-all;
+}
+
+th:nth-child(3), td:nth-child(3){
+width:auto;
+min-width:0;
+}
+
+th:nth-child(4), td:nth-child(4){
+width:90px;
+white-space:nowrap;
+text-align:center;
+}
+
+th:nth-child(5), td:nth-child(5),
+th:nth-child(6), td:nth-child(6){
+width:90px;
+white-space:nowrap;
+text-align:center;
+}
+
+th:nth-child(7), td:nth-child(7){
+width:90px;
+text-align:center;
+}
+
+th:nth-child(8), td:nth-child(8){
+width:90px;
+}
+
+th:nth-child(9), td:nth-child(9){
+width:50px;
+text-align:center;
+}
+
+td:nth-child(3) a{
+display:block;
+line-height:1.8;
+word-break:break-word;
+}
+
+.note{
+width:80px !important;
+}
+
+.pill{
+min-width:64px !important;
+font-size:13px !important;
+}
+</style>
+
+<style>
+
+/* v8.2 固定表頭 */
+.table-wrap{
+overflow:auto !important;
+max-height:calc(100vh - 280px);
+}
+
+thead th{
+position:sticky;
+top:0;
+z-index:100;
+background:#edf3fb !important;
+box-shadow:0 2px 4px rgba(0,0,0,.08);
+}
+
+thead th:first-child{
+border-top-left-radius:12px;
+}
+
+thead th:last-child{
+border-top-right-radius:12px;
+}
+
+</style>
+
+<style>
+
+/* v8.3 ERP固定查詢區+固定欄位列 */
+
+.main{
+overflow:auto !important;
+}
+
+.toolbar{
+position:sticky;
+top:0;
+z-index:1000;
+background:white;
+padding:12px 0;
+margin-bottom:0;
+}
+
+thead th{
+position:sticky;
+top:60px;
+z-index:999;
+background:#edf3fb !important;
+box-shadow:0 2px 4px rgba(0,0,0,.08);
+}
+
+.table-wrap{
+overflow:visible !important;
+max-height:none !important;
+}
+
+</style>
+
+<style>
+
+/* v8.4 資料區獨立捲動 */
+
+.table-scroll{
+height:520px;
+overflow-y:auto;
+overflow-x:auto;
+border-radius:12px;
+}
+
+.table-scroll thead th{
+position:sticky;
+top:0;
+z-index:10;
+background:#edf3fb !important;
+box-shadow:0 2px 4px rgba(0,0,0,.08);
+}
+
+.toolbar{
+position:static !important;
+}
+
+.table-wrap{
+overflow:visible !important;
+}
+
+</style>
