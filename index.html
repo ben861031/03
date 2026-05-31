@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>總收發工作台 v7 正式穩定版</title>
+<title>總收發工作台</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft JhengHei",sans-serif}
@@ -408,7 +408,14 @@ if(docNo && subject){
 
 importedDocNos.push(docNo);
 
-const exists = docs.some(v=>v.docNo===docNo);
+const order = importedDocNos.length;
+const existingDoc = docs.find(v=>v.docNo===docNo);
+
+if(existingDoc){
+existingDoc.sortOrder = order;
+}
+
+const exists = !!existingDoc;
 
 if(!exists){
 
@@ -422,7 +429,8 @@ displayDate:'',
 status:'待發',
 doneTime:'',
 note:'',
-url:url
+url:url,
+sortOrder:order
 });
 
 added++;
@@ -597,6 +605,8 @@ rows.push({d,i});
 
 if(currentFilter==='done'){
 rows.sort((a,b)=>String(b.d.doneTime||'').localeCompare(String(a.d.doneTime||'')));
+}else{
+rows.sort((a,b)=>(a.d.sortOrder||999999)-(b.d.sortOrder||999999));
 }
 
 const totalRows = rows.length;
@@ -661,7 +671,7 @@ onchange="changeStatus(${i},this.value)">
 </td>
 
 <td>
-<input class="note" value="${d.note || ''}" onchange="updateNote(${i},this.value)" placeholder="輸入備註">
+<input class="note" value="${d.note || ''}" oninput="updateNote(${i},this.value)" placeholder="輸入備註">
 </td>
 
 ${isDonePage ? `<td class="done-cell">${d.doneTime || ""}</td>` : ``}
