@@ -283,9 +283,35 @@ white-space:pre-wrap;
 <script>
 
 let docs = JSON.parse(localStorage.getItem('dispatch_v7_stable') || '[]');
+
+docs.forEach(d=>{
+
+if(d.status==='已發文' && !d.doneTimestamp){
+
+d.doneTimestamp = new Date(d.doneTime).getTime() || 0;
+
+}
+
+});
 let currentFilter = 'pending';
 let currentPage = 1;
 const pageSize = 20;
+
+function getDoneInfo(){
+
+const now = new Date();
+
+return {
+    timestamp: now.getTime(),
+    display:
+        now.getFullYear() + '/' +
+        String(now.getMonth()+1).padStart(2,'0') + '/' +
+        String(now.getDate()).padStart(2,'0') + ' ' +
+        String(now.getHours()).padStart(2,'0') + ':' +
+        String(now.getMinutes()).padStart(2,'0')
+};
+
+}
 
 function save(){
 localStorage.setItem('dispatch_v7_stable',JSON.stringify(docs));
@@ -428,6 +454,7 @@ sendDate:'',
 displayDate:'',
 status:'待發',
 doneTime:'',
+doneTimestamp:0,
 note:'',
 url:url,
 sortOrder:order
@@ -453,6 +480,8 @@ d.status==='待發' &&
 d.status='已發文';
 
 const now = new Date();
+
+d.doneTimestamp = now.getTime();
 
 d.doneTime =
 now.getFullYear() + '/' +
@@ -604,7 +633,13 @@ rows.push({d,i});
 });
 
 if(currentFilter==='done'){
-rows.sort((a,b)=>String(b.d.doneTime||'').localeCompare(String(a.d.doneTime||'')));
+
+rows.sort((a,b)=>
+(b.d.doneTimestamp || 0)
+-
+(a.d.doneTimestamp || 0)
+);
+
 }else{
 rows.sort((a,b)=>(a.d.sortOrder||999999)-(b.d.sortOrder||999999));
 }
@@ -856,11 +891,21 @@ docs[i].status = val;
 
 if(val==='已發文'){
 
-docs[i].doneTime = new Date().toLocaleString();
+const now = new Date();
+
+docs[i].doneTimestamp = now.getTime();
+
+docs[i].doneTime =
+now.getFullYear() + '/' +
+String(now.getMonth()+1).padStart(2,'0') + '/' +
+String(now.getDate()).padStart(2,'0') + ' ' +
+String(now.getHours()).padStart(2,'0') + ':' +
+String(now.getMinutes()).padStart(2,'0');
 
 }else{
 
 docs[i].doneTime = '';
+docs[i].doneTimestamp = 0;
 
 }
 
@@ -878,7 +923,17 @@ checks.forEach(c=>{
 const i = Number(c.dataset.index);
 
 docs[i].status='已發文';
-docs[i].doneTime=new Date().toLocaleString();
+
+const now = new Date();
+
+docs[i].doneTimestamp = now.getTime();
+
+docs[i].doneTime =
+now.getFullYear() + '/' +
+String(now.getMonth()+1).padStart(2,'0') + '/' +
+String(now.getDate()).padStart(2,'0') + ' ' +
+String(now.getHours()).padStart(2,'0') + ':' +
+String(now.getMinutes()).padStart(2,'0');
 
 });
 
