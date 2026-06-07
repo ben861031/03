@@ -288,26 +288,33 @@ docs.forEach(d=>{
 
 if(d.status !== '已發文' || !d.doneTime) return;
 
-if(d.doneTime.includes('下午')){
+if(
+d.doneTime.includes('上午') ||
+d.doneTime.includes('下午')
+){
 
 const m = d.doneTime.match(
-/(\d+)\/(\d+)\/(\d+)\s*下午(\d+):(\d+):(\d+)/
+/(\d+)\/(\d+)\/(\d+)\s*(上午|下午)(\d+):(\d+):(\d+)/
 );
 
 if(m){
 
-let hour = Number(m[4]);
+let hour = Number(m[5]);
 
-if(hour < 12){
-hour += 12;
+if(m[4] === '下午' && hour < 12){
+    hour += 12;
+}
+
+if(m[4] === '上午' && hour === 12){
+    hour = 0;
 }
 
 d.doneTimestamp = new Date(
-`${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${m[5]}`
+`${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${m[6]}`
 ).getTime();
 
 d.doneTime =
-`${m[1]}/${String(m[2]).padStart(2,'0')}/${String(m[3]).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${String(m[5]).padStart(2,'0')}`;
+`${m[1]}/${String(m[2]).padStart(2,'0')}/${String(m[3]).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${String(m[6]).padStart(2,'0')}`;
 
 }
 
