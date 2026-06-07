@@ -286,7 +286,32 @@ let docs = JSON.parse(localStorage.getItem('dispatch_v7_stable') || '[]');
 
 docs.forEach(d=>{
 
-if(d.status==='已發文'){
+if(d.status !== '已發文' || !d.doneTime) return;
+
+if(d.doneTime.includes('下午')){
+
+const m = d.doneTime.match(
+/(\d+)\/(\d+)\/(\d+)\s*下午(\d+):(\d+):(\d+)/
+);
+
+if(m){
+
+let hour = Number(m[4]);
+
+if(hour < 12){
+hour += 12;
+}
+
+d.doneTimestamp = new Date(
+`${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${m[5]}`
+).getTime();
+
+d.doneTime =
+`${m[1]}/${String(m[2]).padStart(2,'0')}/${String(m[3]).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${String(m[5]).padStart(2,'0')}`;
+
+}
+
+}else{
 
 const dateObj = new Date(d.doneTime);
 
