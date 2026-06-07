@@ -211,9 +211,13 @@ text-decoration:underline;
 <button class="btn orange" onclick="openImport()">📂 智慧批次匯入</button>
 <button class="btn green" onclick="batchDone()">✓ 批次已發文</button>
 <button class="btn red" onclick="batchDelete()">🗑 批次刪除</button>
+<span id="excelExportArea" style="display:none;">
+
 <button class="btn green" onclick="exportDoneExcel()">
 📊 匯出Excel
 </button>
+
+</span>
 <input type="file" id="backupFile" accept=".json" style="display:none" onchange="importBackup(event)">
 </div>
 </div>
@@ -409,6 +413,18 @@ document.getElementById('pageTitle').innerText = titles[type];
 
 const dateControls = document.getElementById('doneFilterArea');
 
+const excelArea =
+document.getElementById('excelExportArea');
+
+if(excelArea){
+
+excelArea.style.display =
+type === 'done'
+? 'inline-block'
+: 'none';
+
+}
+
 if(dateControls){
 
 dateControls.style.display =
@@ -418,10 +434,6 @@ type === 'done'
 
 }
 
-document.getElementById('doneFilterArea').style.display =
-currentFilter==='done'
-? 'inline-flex'
-: 'none';
 
 render();
 
@@ -744,7 +756,7 @@ return;
 
 rows.push({d,i});
 
-});
+})
 
 if(currentFilter==='done'){
 
@@ -1134,7 +1146,7 @@ return false;
 
 return true;
 
-});
+})
 .sort((a,b)=>
 (b.doneTimestamp||0)-
 (a.doneTimestamp||0)
@@ -1230,6 +1242,11 @@ currentFilter='today';
 currentFilter='pending';
 }
 })();
+
+document.getElementById('excelExportArea').style.display =
+currentFilter === 'done'
+? 'inline-block'
+: 'none';
 
 render();
 
@@ -1469,6 +1486,26 @@ width:110px !important;
 .subject-link{
 display:block;
 line-height:1.7;
+}
+
+#doneFilterArea{
+display:flex;
+align-items:center;
+gap:12px;
+margin-left:24px;
+padding-left:12px;
+border-left:1px solid #e5e7eb;
+}
+
+#doneFilterArea input[type="date"]{
+padding:8px 12px;
+border:1px solid #d1d5db;
+border-radius:8px;
+background:#fff;
+}
+
+#doneFilterArea .btn{
+margin-left:6px;
 }
 
 </style>
