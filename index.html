@@ -211,6 +211,9 @@ text-decoration:underline;
 <button class="btn orange" onclick="openImport()">📂 智慧批次匯入</button>
 <button class="btn green" onclick="batchDone()">✓ 批次已發文</button>
 <button class="btn red" onclick="batchDelete()">🗑 批次刪除</button>
+<button class="btn green" onclick="exportDoneExcel()">
+📊 匯出Excel
+</button>
 <input type="file" id="backupFile" accept=".json" style="display:none" onchange="importBackup(event)">
 </div>
 </div>
@@ -227,7 +230,25 @@ text-decoration:underline;
 <div class="table-wrap">
 
 <div class="toolbar">
-<input id="search" placeholder="搜尋文號 / 主旨 / 承辦人" style="padding:10px;border-radius:10px;border:1px solid #ccc;min-width:280px;">
+
+<input id="search"
+placeholder="搜尋文號 / 主旨 / 承辦人"
+style="padding:10px;border-radius:10px;border:1px solid #ccc;min-width:280px;">
+
+<span id="doneFilterArea" style="display:none;">
+
+<input type="date" id="doneStartDate">
+
+<span>~</span>
+
+<input type="date" id="doneEndDate">
+
+<button class="btn blue" onclick="render()">
+查詢
+</button>
+
+</span>
+
 </div>
 
 <div class="table-scroll">
@@ -385,6 +406,22 @@ done:'已發文'
 };
 
 document.getElementById('pageTitle').innerText = titles[type];
+
+const dateControls = document.getElementById('doneFilterArea');
+
+if(dateControls){
+
+dateControls.style.display =
+type === 'done'
+? 'inline-flex'
+: 'none';
+
+}
+
+document.getElementById('doneFilterArea').style.display =
+currentFilter==='done'
+? 'inline-flex'
+: 'none';
 
 render();
 
@@ -650,6 +687,12 @@ const todayFull = now.toISOString().split('T')[0];
 const today = String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
 const search = document.getElementById('search').value || '';
 
+const doneStartDate =
+document.getElementById('doneStartDate')?.value || '';
+
+const doneEndDate =
+document.getElementById('doneEndDate')?.value || '';
+
 let pending=0,nodateCount=0,todayCount=0,overdue=0,done=0;
 
 docs.forEach(v=>{
@@ -672,6 +715,32 @@ if(currentFilter==='nodate' && !(d.status!=='已發文' && !d.sendDate)) return;
 if(currentFilter==='today' && !(d.sendDate && d.sendDate.slice(5).replace('-','/')===today && d.status!=='已發文')) return;
 if(currentFilter==='overdue' && !(d.sendDate && d.sendDate<todayFull && d.status!=='已發文')) return;
 if(currentFilter==='done' && d.status!=='已發文') return;
+
+if(currentFilter==='done'){
+
+if(doneStartDate){
+
+const start =
+new Date(doneStartDate).getTime();
+
+if((d.doneTimestamp||0) < start){
+return;
+}
+
+}
+
+if(doneEndDate){
+
+const end =
+new Date(doneEndDate + ' 23:59:59').getTime();
+
+if((d.doneTimestamp||0) > end){
+return;
+}
+
+}
+
+}
 
 rows.push({d,i});
 
@@ -1026,6 +1095,86 @@ alert('批次刪除完成');
 
 }
 
+
+function exportDoneExcel(){
+
+const startDate =
+document.getElementById('doneStartDate')?.value || '';
+
+const endDate =
+document.getElementById('doneEndDate')?.value || '';
+
+const rows = docs.filter(v=>{
+
+if(v.status !== '已發文'){
+return false;
+}
+
+if(startDate){
+
+const start =
+new Date(startDate).getTime();
+
+if((v.doneTimestamp||0) < start){
+return false;
+}
+
+}
+
+if(endDate){
+
+const end =
+new Date(endDate + ' 23:59:59').getTime();
+
+if((v.doneTimestamp||0) > end){
+return false;
+}
+
+}
+
+return true;
+
+});
+.sort((a,b)=>
+(b.doneTimestamp||0)-
+(a.doneTimestamp||0)
+);
+
+let csv =
+'\uFEFF表單編號,主旨,承辦人,發文日期,公文顯示日期,完成時間,備註\n';
+
+rows.forEach(r=>{
+
+csv += [
+    `"${r.docNo||''}"`,
+    `"${r.subject||''}"`,
+    `"${r.handler||''}"`,
+    `"${r.sendDate||''}"`,
+    `"${r.displayDate||''}"`,
+    `"${r.doneTime||''}"`,
+    `"${r.note||''}"`
+].join(',') + '\n';
+
+});
+
+const blob = new Blob(
+[csv],
+{type:'text/csv;charset=utf-8;'}
+);
+
+const link = document.createElement('a');
+
+link.href =
+URL.createObjectURL(blob);
+
+link.download =
+'已發文清單_' +
+new Date().toISOString().slice(0,10) +
+'.csv';
+
+link.click();
+
+}
 
 function exportToday(){
 
