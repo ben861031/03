@@ -479,16 +479,10 @@ d.status==='待發' &&
 
 d.status='已發文';
 
-const now = new Date();
+const doneInfo = getDoneInfo();
 
-d.doneTimestamp = now.getTime();
-
-d.doneTime =
-now.getFullYear() + '/' +
-String(now.getMonth()+1).padStart(2,'0') + '/' +
-String(now.getDate()).padStart(2,'0') + ' ' +
-String(now.getHours()).padStart(2,'0') + ':' +
-String(now.getMinutes()).padStart(2,'0');
+d.doneTimestamp = doneInfo.timestamp;
+d.doneTime = doneInfo.display;
 
 autoDone++;
 
@@ -891,16 +885,10 @@ docs[i].status = val;
 
 if(val==='已發文'){
 
-const now = new Date();
+const doneInfo = getDoneInfo();
 
-docs[i].doneTimestamp = now.getTime();
-
-docs[i].doneTime =
-now.getFullYear() + '/' +
-String(now.getMonth()+1).padStart(2,'0') + '/' +
-String(now.getDate()).padStart(2,'0') + ' ' +
-String(now.getHours()).padStart(2,'0') + ':' +
-String(now.getMinutes()).padStart(2,'0');
+docs[i].doneTimestamp = doneInfo.timestamp;
+docs[i].doneTime = doneInfo.display;
 
 }else{
 
@@ -924,16 +912,10 @@ const i = Number(c.dataset.index);
 
 docs[i].status='已發文';
 
-const now = new Date();
+const doneInfo = getDoneInfo();
 
-docs[i].doneTimestamp = now.getTime();
-
-docs[i].doneTime =
-now.getFullYear() + '/' +
-String(now.getMonth()+1).padStart(2,'0') + '/' +
-String(now.getDate()).padStart(2,'0') + ' ' +
-String(now.getHours()).padStart(2,'0') + ':' +
-String(now.getMinutes()).padStart(2,'0');
+docs[i].doneTimestamp = doneInfo.timestamp;
+docs[i].doneTime = doneInfo.display;
 
 });
 
