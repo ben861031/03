@@ -286,13 +286,32 @@ let docs = JSON.parse(localStorage.getItem('dispatch_v7_stable') || '[]');
 
 docs.forEach(d=>{
 
-if(d.status==='已發文' && !d.doneTimestamp){
+if(d.status==='已發文'){
 
-d.doneTimestamp = new Date(d.doneTime).getTime() || 0;
+const dateObj = new Date(d.doneTime);
+
+if(!isNaN(dateObj)){
+
+d.doneTimestamp = dateObj.getTime();
+
+d.doneTime =
+dateObj.getFullYear() + '/' +
+String(dateObj.getMonth()+1).padStart(2,'0') + '/' +
+String(dateObj.getDate()).padStart(2,'0') + ' ' +
+String(dateObj.getHours()).padStart(2,'0') + ':' +
+String(dateObj.getMinutes()).padStart(2,'0');
+
+}
 
 }
 
 });
+
+localStorage.setItem(
+'dispatch_v7_stable',
+JSON.stringify(docs)
+);
+
 let currentFilter = 'pending';
 let currentPage = 1;
 const pageSize = 20;
