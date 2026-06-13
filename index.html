@@ -72,7 +72,9 @@ pointer-events:auto;
 .nav:hover{background:#35639c}
 .nav.active{background:#4f7fc0}
 .badge{background:#ffffff22;padding:4px 10px;border-radius:999px}
-.forecast-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;margin-bottom:6px;background:#ffffff10}
+.forecast-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;margin-bottom:6px;background:#ffffff10;cursor:pointer;transition:.2s}
+.forecast-item:hover{background:#ffffff25;transform:translateX(2px)}
+.forecast-item.active{outline:2px solid #fff;background:#4f7fc0}
 .forecast-today{background:#ffe082;color:#000;font-weight:bold}
 .forecast-danger{background:#7f1d1d}
 .main{flex:1;padding:24px;overflow:auto}
@@ -159,7 +161,7 @@ text-decoration:underline;
 
 <div class="section"><span>工作狀態</span></div>
 
-<div class="nav active" onclick="setFilter('pending',this)">
+<div class="nav active" id="navPending" onclick="setFilter('pending',this)">
 <span>待處理發文</span>
 <span class="badge" id="pendingBadge">0</span>
 </div>
@@ -169,7 +171,7 @@ text-decoration:underline;
 <span class="badge" id="nodateBadge">0</span>
 </div>
 
-<div class="nav" onclick="setFilter('today',this)">
+<div class="nav" id="navToday" onclick="setFilter('today',this)">
 <span>今日發文</span>
 <span class="badge" id="todayBadge">0</span>
 </div>
@@ -370,6 +372,7 @@ JSON.stringify(docs)
 );
 
 let currentFilter = 'pending';
+let selectedForecastDate = '';
 let currentPage = 1;
 const pageSize = 20;
 
@@ -396,6 +399,7 @@ localStorage.setItem('dispatch_v7_stable',JSON.stringify(docs));
 function setFilter(type,el){
 
 currentFilter = type;
+selectedForecastDate = '';
 
 document.querySelectorAll('.nav').forEach(v=>v.classList.remove('active'));
 
@@ -439,6 +443,27 @@ render();
 
 }
 
+function filterForecastDate(dateStr){
+
+currentFilter = 'forecast';
+selectedForecastDate = dateStr;
+currentPage = 1;
+
+document.querySelectorAll('.nav').forEach(v=>v.classList.remove('active'));
+
+const date = new Date(dateStr + 'T00:00:00');
+const weekNames = ['日','一','二','三','四','五','六'];
+
+document.getElementById('pageTitle').innerText =
+`${date.getMonth()+1}月${date.getDate()}日（週${weekNames[date.getDay()]}）待發公文`;
+
+document.getElementById('doneFilterArea').style.display = 'none';
+document.getElementById('excelExportArea').style.display = 'none';
+
+render();
+
+}
+
 function openImport(){
 document.getElementById('importModal').style.display='flex';
 }
@@ -466,6 +491,11 @@ const editor = document.getElementById('importText');
 
 const htmlContent = editor.innerHTML;
 const textContent = editor.innerText;
+
+if(!textContent.trim()){
+alert('尚未貼上任何資料，未執行匯入。');
+return;
+}
 
 const parser = new DOMParser();
 const parsed = parser.parseFromString(htmlContent,'text/html');
@@ -568,6 +598,11 @@ added++;
 
 }
 
+}
+
+if(importedDocNos.length===0){
+alert('未解析到有效的發文資料，未變更任何既有資料。請確認貼上的內容格式是否正確。');
+return;
 }
 
 docs.forEach(d=>{
@@ -728,6 +763,7 @@ if(currentFilter==='nodate' && !(d.status!=='已發文' && !d.sendDate)) return;
 if(currentFilter==='today' && !(d.sendDate && d.sendDate.slice(5).replace('-','/')===today && d.status!=='已發文')) return;
 if(currentFilter==='overdue' && !(d.sendDate && d.sendDate<todayFull && d.status!=='已發文')) return;
 if(currentFilter==='done' && d.status!=='已發文') return;
+if(currentFilter==='forecast' && !(d.sendDate===selectedForecastDate && d.status!=='已發文')) return;
 
 if(currentFilter==='done'){
 
@@ -932,6 +968,12 @@ const count = docs.filter(v=>v.sendDate===dateStr && v.status!=='已發文').len
 const div = document.createElement('div');
 
 div.className='forecast-item';
+div.title=`查看 ${mm}/${dd} 待發公文`;
+div.onclick=()=>filterForecastDate(dateStr);
+
+if(currentFilter==='forecast' && selectedForecastDate===dateStr){
+div.classList.add('active');
+}
 
 if(i===0){
 div.classList.add('forecast-today');
@@ -1230,17 +1272,19 @@ document.getElementById('search').addEventListener('input',render);
 (function(){
 const now=new Date();
 const today=String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0');
-const todayFull=now.toISOString().split('T')[0];
 
-const overdueCount=docs.filter(v=>v.sendDate && v.sendDate<todayFull && v.status!=='已發文').length;
 const todayCount=docs.filter(v=>v.sendDate && v.sendDate.slice(5).replace('-','/')===today && v.status!=='已發文').length;
 
-if(overdueCount>0){
-currentFilter='overdue';
-}else if(todayCount>0){
+document.querySelectorAll('.nav').forEach(v=>v.classList.remove('active'));
+
+if(todayCount>0){
 currentFilter='today';
+document.getElementById('pageTitle').innerText='今日發文';
+document.getElementById('navToday').classList.add('active');
 }else{
 currentFilter='pending';
+document.getElementById('pageTitle').innerText='待處理發文';
+document.getElementById('navPending').classList.add('active');
 }
 })();
 
