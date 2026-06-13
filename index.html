@@ -25,11 +25,13 @@ padding:20px;
 overflow:auto;
 }
 .logo{
-font-size:24px;
+font-size:22px;
 font-weight:bold;
 margin-bottom:24px;
 white-space:nowrap;
 }
+.logo-mark{width:24px;height:24px;stroke-width:1.8}
+.expanded-logo{align-items:center;gap:10px}
 
 .collapsed-logo{
 display:flex;
@@ -46,7 +48,7 @@ display:none;
 }
 
 .sidebar:hover .expanded-logo{
-display:block;
+display:flex;
 }
 
 .sidebar .section,
@@ -71,6 +73,9 @@ pointer-events:auto;
 .nav{display:flex;justify-content:space-between;align-items:center;padding:14px;border-radius:14px;margin-bottom:8px;background:#295287;cursor:pointer;transition:.2s;white-space:nowrap;overflow:hidden}
 .nav:hover{background:#35639c}
 .nav.active{background:#4f7fc0}
+.nav-label{display:flex;align-items:center;gap:10px}
+.nav-icon{width:19px;height:19px;flex:0 0 19px;stroke-width:1.8}
+.data-nav{color:#e8f0fb}
 .badge{background:#ffffff22;padding:4px 10px;border-radius:999px}
 .forecast-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;margin-bottom:6px;background:#ffffff10;cursor:pointer;transition:.2s}
 .forecast-item:hover{background:#ffffff25;transform:translateX(2px)}
@@ -78,12 +83,23 @@ pointer-events:auto;
 .forecast-today{background:#ffe082;color:#000;font-weight:bold}
 .forecast-danger{background:#7f1d1d}
 .main{flex:1;padding:24px;overflow:auto}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-.btn{border:none;padding:11px 16px;border-radius:12px;font-weight:bold;cursor:pointer}
-.green{background:#16a34a;color:#fff}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:20px}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;border:1px solid transparent;padding:9px 14px;border-radius:10px;font-weight:700;cursor:pointer;transition:background .18s,border-color .18s,box-shadow .18s,transform .18s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(15,23,42,.12)}
+.btn-icon{width:18px;height:18px;flex:0 0 18px;stroke-width:2}
+.green{background:#15803d;color:#fff}
 .blue{background:#2563eb;color:#fff}
 .red{background:#dc2626;color:#fff}
-.orange{background:#f59e0b;color:#fff}
+.orange{background:#d97706;color:#fff}
+.secondary{background:#fff;color:#245898;border-color:#b9cbe2}
+.secondary:hover{background:#f3f7fc;border-color:#7da2cf}
+.primary-import{background:#3568b8;color:#fff}
+.primary-import:hover{background:#2f5fa8;box-shadow:none}
+.success-soft{background:#e9f7ee;color:#14723a;border-color:#b9e3c8}
+.success-soft:hover{background:#dff2e6}
+.danger-soft{background:#fff;color:#c52b2b;border-color:#efb8b8}
+.danger-soft:hover{background:#fff1f1}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:18px}
 .card{background:white;padding:20px;border-radius:18px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
 .card h2{font-size:32px;margin-top:10px}
@@ -156,7 +172,11 @@ text-decoration:underline;
 </div>
 
 <div class="logo expanded-logo">
-📨 發文時程管制平台
+<svg class="logo-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<rect x="3" y="5" width="18" height="14" rx="2"></rect>
+<path d="m3 7 9 6 9-6"></path>
+</svg>
+<span>發文時程管制平台</span>
 </div>
 
 <div class="section"><span>工作狀態</span></div>
@@ -192,12 +212,22 @@ text-decoration:underline;
 
 <div class="section"><span>資料管理</span></div>
 
-<div class="nav" onclick="exportBackup()">
-<span>💾 匯出備份</span>
+<div class="nav data-nav" onclick="exportBackup()">
+<span class="nav-label">
+<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path>
+</svg>
+匯出備份
+</span>
 </div>
 
-<div class="nav" onclick="document.getElementById('backupFile').click()">
-<span>📂 匯入備份</span>
+<div class="nav data-nav" onclick="document.getElementById('backupFile').click()">
+<span class="nav-label">
+<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M12 21V9"></path><path d="m7 14 5-5 5 5"></path><path d="M5 3h14"></path>
+</svg>
+匯入備份
+</span>
 </div>
 
 
@@ -208,15 +238,38 @@ text-decoration:underline;
 <div class="topbar">
 <h1 id="pageTitle">待處理發文</h1>
 
-<div style="display:flex;gap:10px;">
-<button class="btn blue" onclick="window.open('http://iiseng.sinotech-eng.com/SinoForm/Doc/Dispatch','_blank')">🗄️ 發文作業</button>
-<button class="btn orange" onclick="openImport()">📂 智慧批次匯入</button>
-<button class="btn green" onclick="batchDone()">✓ 批次已發文</button>
-<button class="btn red" onclick="batchDelete()">🗑 批次刪除</button>
+<div class="top-actions">
+<button class="btn primary-import" onclick="openImport()">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M4 19h16"></path>
+</svg>
+智慧批次匯入
+</button>
+<button class="btn secondary" onclick="window.open('http://iiseng.sinotech-eng.com/SinoForm/Doc/Dispatch','_blank')">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path>
+</svg>
+發文作業
+</button>
+<button class="btn success-soft" onclick="batchDone()">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path>
+</svg>
+批次已發文
+</button>
+<button class="btn danger-soft" onclick="batchDelete()">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="m6 7 1 14h10l1-14"></path><path d="M10 11v6M14 11v6"></path>
+</svg>
+批次刪除
+</button>
 <span id="excelExportArea" style="display:none;">
 
 <button class="btn green" onclick="exportDoneExcel()">
-📊 匯出Excel
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path>
+</svg>
+匯出 Excel
 </button>
 
 </span>
@@ -873,7 +926,11 @@ onchange="changeStatus(${i},this.value)">
 </td>
 
 ${isDonePage ? `<td class="done-cell">${d.doneTime || ""}</td>` : ``}
-<td><button class="btn red" style="padding:6px 10px;" onclick="deleteDoc(${i})">🗑</button></td>
+<td><button class="btn danger-soft" style="padding:6px 10px;min-height:34px;" onclick="deleteDoc(${i})" title="刪除">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="m6 7 1 14h10l1-14"></path>
+</svg>
+</button></td>
 `;
 
 tbody.appendChild(tr);
@@ -1306,7 +1363,12 @@ render();
 <button class="btn green" onclick="quickDate(activeDateIndex,1);closeDateQuickModal();">明天</button>
 <button class="btn orange" onclick="quickDate(activeDateIndex,2);closeDateQuickModal();">後天</button>
 <input type="date" id="modalDateInput" style="padding:10px;border:1px solid #ccc;border-radius:8px;">
-<button class="btn" onclick="applyCustomDate()">📅 選擇日期</button>
+<button class="btn secondary" onclick="applyCustomDate()">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path>
+</svg>
+選擇日期
+</button>
 <button class="btn red" onclick="closeDateQuickModal()">取消</button>
 </div>
 </div>
