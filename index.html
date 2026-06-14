@@ -193,7 +193,7 @@ text-decoration:underline;
 <span class="badge" id="pendingBadge">0</span>
 </div>
 
-<div class="nav" onclick="setFilter('nodate',this)">
+<div class="nav" id="navNodate" onclick="setFilter('nodate',this)">
 <span>未設定日期</span>
 <span class="badge" id="nodateBadge">0</span>
 </div>
@@ -804,6 +804,19 @@ doc.doneTime=doneInfo.display;
 
 const added=pendingImportPlan.newItems.length;
 const autoDone=pendingImportPlan.autoDoneItems.length;
+const hasNoDate=docs.some(d=>d.status!=='已發文' && !d.sendDate);
+
+if(hasNoDate){
+currentFilter='nodate';
+selectedForecastDate='';
+currentPage=1;
+
+document.querySelectorAll('.nav').forEach(v=>v.classList.remove('active'));
+document.getElementById('navNodate').classList.add('active');
+document.getElementById('pageTitle').innerText='未設定日期';
+document.getElementById('doneFilterArea').style.display='none';
+document.getElementById('excelExportArea').style.display='none';
+}
 
 save();
 render();
