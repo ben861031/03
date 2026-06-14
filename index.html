@@ -470,6 +470,32 @@ let pendingImportPlan = null;
 let currentPage = 1;
 const pageSize = 20;
 
+function getLocalDateString(date = new Date()){
+
+return (
+date.getFullYear() + '-' +
+String(date.getMonth()+1).padStart(2,'0') + '-' +
+String(date.getDate()).padStart(2,'0')
+);
+
+}
+
+function getLocalDateTimestamp(dateString,endOfDay=false){
+
+const [year,month,day]=dateString.split('-').map(Number);
+
+return new Date(
+year,
+month-1,
+day,
+endOfDay ? 23 : 0,
+endOfDay ? 59 : 0,
+endOfDay ? 59 : 0,
+endOfDay ? 999 : 0
+).getTime();
+
+}
+
 function getDoneInfo(){
 
 const now = new Date();
@@ -887,8 +913,7 @@ v.style.display = isDonePage ? '' : 'none';
 
 
 const now = new Date();
-const todayFull = now.toISOString().split('T')[0];
-const today = String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
+const todayFull = getLocalDateString(now);
 const search = document.getElementById('search').value || '';
 
 const doneStartDate =
@@ -902,7 +927,7 @@ let pending=0,nodateCount=0,todayCount=0,overdue=0,done=0;
 docs.forEach(v=>{
 if(v.status!=='已發文') pending++;
 if(v.status!=='已發文' && !v.sendDate) nodateCount++;
-if(v.sendDate && v.sendDate.slice(5).replace('-','/')===today && v.status!=='已發文') todayCount++;
+if(v.sendDate===todayFull && v.status!=='已發文') todayCount++;
 if(v.sendDate && v.sendDate<todayFull && v.status!=='已發文') overdue++;
 if(v.status==='已發文') done++;
 });
@@ -916,7 +941,7 @@ const text = `${d.docNo} ${d.subject} ${d.handler}`;
 if(search && !text.includes(search)) return;
 if(currentFilter==='pending' && d.status==='已發文') return;
 if(currentFilter==='nodate' && !(d.status!=='已發文' && !d.sendDate)) return;
-if(currentFilter==='today' && !(d.sendDate && d.sendDate.slice(5).replace('-','/')===today && d.status!=='已發文')) return;
+if(currentFilter==='today' && !(d.sendDate===todayFull && d.status!=='已發文')) return;
 if(currentFilter==='overdue' && !(d.sendDate && d.sendDate<todayFull && d.status!=='已發文')) return;
 if(currentFilter==='done' && d.status!=='已發文') return;
 if(currentFilter==='forecast' && !(d.sendDate===selectedForecastDate && d.status!=='已發文')) return;
@@ -926,7 +951,7 @@ if(currentFilter==='done'){
 if(doneStartDate){
 
 const start =
-new Date(doneStartDate).getTime();
+getLocalDateTimestamp(doneStartDate);
 
 if((d.doneTimestamp||0) < start){
 return;
@@ -937,7 +962,7 @@ return;
 if(doneEndDate){
 
 const end =
-new Date(doneEndDate + ' 23:59:59').getTime();
+getLocalDateTimestamp(doneEndDate,true);
 
 if((d.doneTimestamp||0) > end){
 return;
@@ -1361,7 +1386,7 @@ return false;
 if(startDate){
 
 const start =
-new Date(startDate).getTime();
+getLocalDateTimestamp(startDate);
 
 if((v.doneTimestamp||0) < start){
 return false;
@@ -1372,7 +1397,7 @@ return false;
 if(endDate){
 
 const end =
-new Date(endDate + ' 23:59:59').getTime();
+getLocalDateTimestamp(endDate,true);
 
 if((v.doneTimestamp||0) > end){
 return false;
@@ -1417,7 +1442,7 @@ URL.createObjectURL(blob);
 
 link.download =
 '已發文清單_' +
-new Date().toISOString().slice(0,10) +
+getLocalDateString() +
 '.csv';
 
 link.click();
@@ -1426,7 +1451,7 @@ link.click();
 
 function exportToday(){
 
-const today = new Date().toISOString().split('T')[0];
+const today = getLocalDateString();
 
 const rows = docs.filter(v=>v.sendDate===today);
 
@@ -1463,10 +1488,9 @@ w.print();
 document.getElementById('search').addEventListener('input',render);
 
 (function(){
-const now=new Date();
-const today=String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0');
+const today=getLocalDateString();
 
-const todayCount=docs.filter(v=>v.sendDate && v.sendDate.slice(5).replace('-','/')===today && v.status!=='已發文').length;
+const todayCount=docs.filter(v=>v.sendDate===today && v.status!=='已發文').length;
 
 document.querySelectorAll('.nav').forEach(v=>v.classList.remove('active'));
 
