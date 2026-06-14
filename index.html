@@ -203,7 +203,7 @@ text-decoration:underline;
 <span class="badge" id="todayBadge">0</span>
 </div>
 
-<div class="nav" onclick="setFilter('overdue',this)">
+<div class="nav" id="navOverdue" onclick="setFilter('overdue',this)">
 <span>已逾期</span>
 <span class="badge" id="overdueBadge">0</span>
 </div>
@@ -1490,11 +1490,21 @@ document.getElementById('search').addEventListener('input',render);
 (function(){
 const today=getLocalDateString();
 
+const overdueCount=docs.filter(v=>
+v.sendDate &&
+v.sendDate<today &&
+v.status!=='已發文'
+).length;
+
 const todayCount=docs.filter(v=>v.sendDate===today && v.status!=='已發文').length;
 
 document.querySelectorAll('.nav').forEach(v=>v.classList.remove('active'));
 
-if(todayCount>0){
+if(overdueCount>0){
+currentFilter='overdue';
+document.getElementById('pageTitle').innerText='已逾期';
+document.getElementById('navOverdue').classList.add('active');
+}else if(todayCount>0){
 currentFilter='today';
 document.getElementById('pageTitle').innerText='今日發文';
 document.getElementById('navToday').classList.add('active');
