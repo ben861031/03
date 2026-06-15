@@ -622,18 +622,43 @@ const parsed = parser.parseFromString(htmlContent,'text/html');
 
 const links = [...parsed.querySelectorAll('a')];
 
-const urlMap = {};
+const linkEntries = [];
 
 links.forEach(link=>{
 
-const text = link.innerText.trim();
+const text = cleanLine(link.innerText);
 const href = link.href;
 
 if(text && href){
-urlMap[text] = href;
+linkEntries.push({
+text,
+href,
+used:false
+});
 }
 
 });
+
+function takeMatchingUrl(subject){
+
+const exactMatch=linkEntries.find(entry=>
+!entry.used &&
+entry.text===subject
+);
+
+const match=exactMatch || linkEntries.find(entry=>
+!entry.used &&
+(subject.includes(entry.text) || entry.text.includes(subject))
+);
+
+if(!match){
+return '';
+}
+
+match.used=true;
+return match.href;
+
+}
 
 let lines = textContent.split('\n')
 .map(v=>cleanLine(v))
@@ -659,14 +684,7 @@ for(let j=i+3;j<i+8 && j<lines.length;j++){
 if(lines[j].length >= 8 && !subject){
 
 subject = lines[j];
-
-Object.keys(urlMap).forEach(key=>{
-
-if(subject.includes(key) || key.includes(subject)){
-url = urlMap[key];
-}
-
-});
+url = takeMatchingUrl(subject);
 
 continue;
 
@@ -1312,6 +1330,13 @@ function batchDone(){
 
 const checks = document.querySelectorAll('.batch-check:checked');
 
+if(checks.length===0){
+
+alert('請先勾選資料');
+return;
+
+}
+
 checks.forEach(c=>{
 
 const i = Number(c.dataset.index);
@@ -1511,6 +1536,11 @@ v.status!=='已發文'
 
 const todayCount=docs.filter(v=>v.sendDate===today && v.status!=='已發文').length;
 
+const nodateCount=docs.filter(v=>
+v.status!=='已發文' &&
+!v.sendDate
+).length;
+
 document.querySelectorAll('.nav').forEach(v=>v.classList.remove('active'));
 
 if(overdueCount>0){
@@ -1521,6 +1551,10 @@ document.getElementById('navOverdue').classList.add('active');
 currentFilter='today';
 document.getElementById('pageTitle').innerText='今日發文';
 document.getElementById('navToday').classList.add('active');
+}else if(nodateCount>0){
+currentFilter='nodate';
+document.getElementById('pageTitle').innerText='未設定日期';
+document.getElementById('navNodate').classList.add('active');
 }else{
 currentFilter='pending';
 document.getElementById('pageTitle').innerText='待處理發文';
