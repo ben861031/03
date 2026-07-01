@@ -1065,7 +1065,7 @@ ${d.sendDate ? d.sendDate.replace(/^\d{4}-/,'').replace('-','/') : '未設定'}
 </td>
 
 <td>
-<div class="pill display-pill" onclick="document.getElementById('display_${i}').showPicker()">
+<div class="pill display-pill" onclick="openDateQuickModal(${i},'display')">
 ${d.displayDate ? d.displayDate.replace(/^\d{4}-/,'').replace('-','/') : '未設定'}
 </div>
 <input id="display_${i}" class="hidden-date" type="date" value="${d.displayDate}" onchange="updateDisplay(${i},this.value)">
@@ -1242,10 +1242,24 @@ box.appendChild(div);
 
 
 let activeDateIndex=null;
+let activeDateMode='send';
 
-function openDateQuickModal(i){
-activeDateIndex=i;
-document.getElementById('dateQuickModal').style.display='flex';
+function openDateQuickModal(i, mode='send') {
+activeDateIndex = i;
+activeDateMode = mode;
+
+const title = document.getElementById('dateQuickModalTitle');
+const input = document.getElementById('modalDateInput');
+
+if (title) {
+title.innerText = mode === 'display' ? '設定公文顯示日期' : '設定發文日期';
+}
+
+if (input) {
+input.value = mode === 'display' ? (docs[i].displayDate || '') : (docs[i].sendDate || '');
+}
+
+document.getElementById('dateQuickModal').style.display = 'flex';
 }
 
 function closeDateQuickModal(){
@@ -1255,7 +1269,13 @@ document.getElementById('dateQuickModal').style.display='none';
 function applyCustomDate(){
 const val=document.getElementById('modalDateInput').value;
 if(!val) return;
+
+if(activeDateMode === 'display'){
+updateDisplay(activeDateIndex,val);
+}else{
 updateSend(activeDateIndex,val);
+}
+
 closeDateQuickModal();
 }
 
@@ -1280,11 +1300,16 @@ d.setDate(d.getDate()+offset);
 const yyyy=d.getFullYear();
 const mm=String(d.getMonth()+1).padStart(2,'0');
 const dd=String(d.getDate()).padStart(2,'0');
+const dateStr=`${yyyy}-${mm}-${dd}`;
 
-docs[i].sendDate=`${yyyy}-${mm}-${dd}`;
+if(activeDateMode === 'display'){
+docs[i].displayDate=dateStr;
+}else{
+docs[i].sendDate=dateStr;
 
 if(!docs[i].displayDate){
 docs[i].displayDate=docs[i].sendDate;
+}
 }
 
 save();
@@ -1574,7 +1599,7 @@ render();
 
 <div class="modal" id="dateQuickModal">
 <div class="modal-box" style="width:380px;">
-<h3 style="margin-bottom:15px;">設定發文日期</h3>
+<h3 id="dateQuickModalTitle" style="margin-bottom:15px;">設定發文日期</h3>
 <div style="display:flex;flex-direction:column;gap:8px;">
 <button class="btn blue" onclick="quickDate(activeDateIndex,0);closeDateQuickModal();">今天</button>
 <button class="btn green" onclick="quickDate(activeDateIndex,1);closeDateQuickModal();">明天</button>
