@@ -301,6 +301,12 @@ td:nth-child(3) a{display:block;line-height:1.8;word-break:break-word}
 </svg>
 發文作業
 </button>
+<button class="btn secondary" onclick="openMyReview()">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M9 12l2 2 4-5"></path><path d="M21 12a9 9 0 1 1-4.2-7.6"></path><path d="M21 3v6h-6"></path>
+</svg>
+線上簽核
+</button>
 <button class="btn success-soft" onclick="batchDone()">
 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path>
@@ -532,6 +538,7 @@ const externalSinoSignHost = 'web.sinotech-eng.com';
 const dispatchListPath = '/SinoForm/Doc/Dispatch';
 const dispatchDetailPath = '/SinoForm/Doc/Dispatch1/';
 const signEditPath = '/SinoSign/Form/Edit/';
+const myReviewPath = '/SinoSign/#/MyReview';
 
 function getLocalDateString(date = new Date()){
 
@@ -661,6 +668,10 @@ function getDispatchListUrl(){
 return `${getSmartBaseUrl()}${dispatchListPath}`;
 }
 
+function getMyReviewUrl(){
+return `${getSmartBaseUrl()}${myReviewPath}`;
+}
+
 function getLinkModeLabel(){
 const mode=getEffectiveLinkMode();
 return mode === 'internal' ? '公司內連結' : '公司外連結';
@@ -694,6 +705,10 @@ showToast(linkMode === 'auto' ? `已切回自動模式，目前使用${getLinkMo
 
 function openDispatchList(){
 window.open(getDispatchListUrl(),'_blank','noopener');
+}
+
+function openMyReview(){
+window.open(getMyReviewUrl(),'_blank','noopener');
 }
 
 function openCompare(i){
