@@ -92,12 +92,14 @@ pointer-events:auto;
 .blue{background:#2563eb;color:#fff}
 .red{background:#dc2626;color:#fff}
 .orange{background:#d97706;color:#fff}
-.secondary{background:#4b6584;color:#fff;border-color:#4b6584}
-.secondary:hover{background:#405672;border-color:#405672}
+.secondary{background:#475569;color:#fff;border-color:#475569}
+.secondary:hover{background:#334155;border-color:#334155}
+.review-link{background:#0f766e;color:#fff;border-color:#0f766e}
+.review-link:hover{background:#115e59;border-color:#115e59}
 .primary-import{background:#2563eb;color:#fff;border-color:#2563eb}
 .primary-import:hover{background:#1d4ed8;border-color:#1d4ed8;box-shadow:0 4px 10px rgba(15,23,42,.12)}
-.success-soft{background:#f59e0b;color:#fff;border-color:#f59e0b}
-.success-soft:hover{background:#d97706;border-color:#d97706}
+.success-soft{background:#047857;color:#fff;border-color:#047857}
+.success-soft:hover{background:#065f46;border-color:#065f46}
 .danger-soft{background:#dc2626;color:#fff;border-color:#dc2626}
 .danger-soft:hover{background:#b91c1c;border-color:#b91c1c}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:18px}
@@ -293,7 +295,7 @@ td:nth-child(3) a{display:block;line-height:1.8;word-break:break-word}
 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M4 19h16"></path>
 </svg>
-智慧批次匯入
+批次匯入
 </button>
 <button class="btn secondary" onclick="openDispatchList()">
 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -301,7 +303,7 @@ td:nth-child(3) a{display:block;line-height:1.8;word-break:break-word}
 </svg>
 發文作業
 </button>
-<button class="btn secondary" onclick="openMyReview()">
+<button class="btn review-link" onclick="openMyReview()">
 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M9 12l2 2 4-5"></path><path d="M21 12a9 9 0 1 1-4.2-7.6"></path><path d="M21 3v6h-6"></path>
 </svg>
@@ -311,7 +313,7 @@ td:nth-child(3) a{display:block;line-height:1.8;word-break:break-word}
 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path>
 </svg>
-批次已發文
+批次完成
 </button>
 <button class="btn danger-soft" onclick="batchDelete()">
 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
