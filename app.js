@@ -1,4 +1,303 @@
-﻿
+const AppTemplate = `
+<div class="sidebar">
+<div class="logo collapsed-logo">
+☰
+</div>
+<div class="logo expanded-logo">
+<svg class="logo-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<rect x="3" y="5" width="18" height="14" rx="2"></rect>
+<path d="m3 7 9 6 9-6"></path>
+</svg>
+<span>發文時程管理平台</span>
+</div>
+<div class="section"><span>工作狀態</span></div>
+<div class="nav active" id="navPending" onclick="setFilter('pending',this)">
+<span>尚待發文</span>
+<span class="badge" id="pendingBadge">0</span>
+</div>
+<div class="nav" id="navNodate" onclick="setFilter('nodate',this)">
+<span>未設定日期</span>
+<span class="badge" id="nodateBadge">0</span>
+</div>
+<div class="nav" id="navToday" onclick="setFilter('today',this)">
+<span>今日待發</span>
+<span class="badge" id="todayBadge">0</span>
+</div>
+<div class="nav" id="navOverdue" onclick="setFilter('overdue',this)">
+<span>已逾期</span>
+<span class="badge" id="overdueBadge">0</span>
+</div>
+<div class="nav" onclick="setFilter('done',this)">
+<span>累計已發</span>
+<span class="badge" id="doneBadge">0</span>
+</div>
+<div class="section"><span>未來一週發文量</span></div>
+<div id="forecastBox"></div>
+<div class="section"><span>資料管理</span></div>
+<div class="nav data-nav" onclick="exportBackup()">
+<span class="nav-label">
+<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path>
+</svg>
+匯出備份
+</span>
+</div>
+<div class="nav data-nav" onclick="document.getElementById('backupFile').click()">
+<span class="nav-label">
+<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M12 21V9"></path><path d="m7 14 5-5 5 5"></path><path d="M5 3h14"></path>
+</svg>
+匯入備份
+</span>
+</div>
+</div>
+<div class="main">
+<div class="topbar">
+<h1 id="pageTitle">尚待發文</h1>
+<div class="top-actions">
+<button class="btn primary-import" onclick="openImport()">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M4 19h16"></path>
+</svg>
+批次匯入
+</button>
+<button class="btn secondary" onclick="openDispatchList()">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path>
+</svg>
+發文作業
+</button>
+<button class="btn review-link" onclick="openMyReview()">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M9 12l2 2 4-5"></path><path d="M21 12a9 9 0 1 1-4.2-7.6"></path><path d="M21 3v6h-6"></path>
+</svg>
+線上簽核
+</button>
+<button class="btn success-soft" onclick="batchDone()">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path>
+</svg>
+批次完成
+</button>
+<button class="btn danger-soft" onclick="batchDelete()">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="m6 7 1 14h10l1-14"></path><path d="M10 11v6M14 11v6"></path>
+</svg>
+批次刪除
+</button>
+<span id="excelExportArea" style="display:none;">
+<button class="btn excel-export" onclick="exportDoneExcel()">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path>
+</svg>
+匯出 Excel
+</button>
+</span>
+<input type="file" id="backupFile" accept=".json" style="display:none" onchange="importBackup(event)">
+</div>
+</div>
+<div id="warningBox" class="warning" style="display:none"></div>
+<div class="cards">
+<div class="card"><p>尚待發文</p><h2 id="pendingCount">0</h2></div>
+<div class="card"><p>今日待發</p><h2 id="todayCount">0</h2></div>
+<div class="card"><p>已逾期</p><h2 id="overdueCount">0</h2></div>
+<div class="card"><p>累計已發</p><h2 id="doneCount">0</h2></div>
+</div>
+<div class="table-wrap">
+<div class="toolbar">
+<div class="search-wrap">
+<input id="search"
+placeholder="搜尋文號 / 主旨 / 承辦人"
+style="padding:10px;border-radius:10px;border:1px solid #ccc;min-width:280px;">
+<button class="btn muted-btn" onclick="clearSearch()" title="清除搜尋">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M18 6 6 18"></path><path d="m6 6 12 12"></path>
+</svg>
+</button>
+</div>
+<select id="themeSelect" onchange="document.documentElement.className = this.value; localStorage.setItem('dispatch_theme', this.value)" style="padding:10px 14px; border-radius:10px; border:1px solid #e2e8f0; background:white; font-weight:600; cursor:pointer; color:var(--text-main);">
+  <option value="">主題：清新全白</option>
+  <option value="theme-ocean">主題：柔和海洋藍</option>
+  <option value="theme-gray">主題：莫蘭迪淺灰</option>
+  <option value="theme-dark">主題：經典深藍</option>
+  <option value="theme-obsidian">主題：曜石黑 (OLED)</option>
+  <option value="theme-milktea">主題：焦糖奶茶棕</option>
+  <option value="theme-sakura">主題：初戀櫻花粉</option>
+  <option value="theme-sepia">主題：溫暖護眼黃</option>
+</select>
+<select id="linkMode" title="切換主旨連結使用內網或外網" onchange="setLinkMode(this.value)">
+<option value="auto">連結：自動</option>
+<option value="internal">連結：公司內</option>
+<option value="external">連結：公司外</option>
+</select>
+<span id="doneFilterArea" style="display:none;">
+<input type="date" id="doneStartDate">
+<span>~</span>
+<input type="date" id="doneEndDate">
+<button class="btn blue" onclick="render()">
+查詢
+</button>
+</span>
+</div>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th><input type="checkbox" id="selectAllVisible" class="select-all" title="全選目前畫面" onchange="toggleSelectAllVisible(this.checked)"></th>
+<th><button class="sort-btn" onclick="setSort('docNo')">表單編號 <span class="sort-mark" data-sort-mark="docNo"></span></button></th>
+<th><button class="sort-btn" onclick="setSort('subject')">主旨 <span class="sort-mark" data-sort-mark="subject"></span></button></th>
+<th><button class="sort-btn" onclick="setSort('handler')">承辦人 <span class="sort-mark" data-sort-mark="handler"></span></button></th>
+<th><button class="sort-btn" onclick="setSort('sendDate')">發文日期 <span class="sort-mark" data-sort-mark="sendDate"></span></button></th>
+<th><button class="sort-btn" onclick="setSort('displayDate')">公文顯示日期 <span class="sort-mark" data-sort-mark="displayDate"></span></button></th>
+<th><button class="sort-btn" onclick="setSort('status')">狀態 <span class="sort-mark" data-sort-mark="status"></span></button></th>
+<th>備註說明</th>
+<th class="done-column"><button class="sort-btn" onclick="setSort('doneTime')">完成時間 <span class="sort-mark" data-sort-mark="doneTime"></span></button></th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+<div id="paginationBar" style="margin-top:15px;text-align:center;"></div>
+</div>
+</div>
+<div class="modal" id="importModal">
+<div class="modal-box">
+<h2>智慧批次匯入</h2>
+<div 
+id="importText"
+contenteditable="true"
+style="
+width:100%;
+height:320px;
+padding:12px;
+border-radius:12px;
+border:1px solid #ccc;
+overflow:auto;
+background:white;
+white-space:pre-wrap;
+"></div>
+<div style="margin-top:14px;display:flex;gap:10px;">
+<button class="btn green" onclick="confirmImport()">確認匯入</button>
+<button class="btn blue" onclick="closeImport()">關閉</button>
+</div>
+</div>
+</div>
+<div class="modal" id="importPreviewModal">
+<div class="modal-box" style="width:720px;">
+<h2>確認同步內容</h2>
+<p style="margin-top:8px;color:#64748b;">請確認以下變更，按下「執行同步」後才會更新資料。</p>
+<div class="preview-summary">
+<div class="preview-stat">新增公文<strong id="previewAddedCount">0</strong></div>
+<div class="preview-stat">既有公文<strong id="previewExistingCount">0</strong></div>
+<div class="preview-stat danger">將標記已發文<strong id="previewAutoDoneCount">0</strong></div>
+</div>
+<div style="margin-bottom:14px;">
+<strong>新增公文</strong>
+<div id="previewAddedList" class="preview-list"></div>
+</div>
+<div style="margin-bottom:14px;">
+<strong>既有公文（保留原狀）</strong>
+<div id="previewExistingList" class="preview-list"></div>
+</div>
+<div style="margin-bottom:14px;">
+<strong style="color:#991b1b;">將自動標記為已發文</strong>
+<div id="previewAutoDoneList" class="preview-list"></div>
+</div>
+<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;">
+<button class="btn secondary" onclick="closeImportPreview()">返回檢查</button>
+<button class="btn primary-import" onclick="executeImport()">執行同步</button>
+</div>
+</div>
+</div>
+<div class="modal" id="dateQuickModal">
+<div class="modal-box" style="width:380px;">
+<h3 id="dateQuickModalTitle" style="margin-bottom:15px;">設定發文日期</h3>
+<div style="display:flex;flex-direction:column;gap:8px;">
+<button class="btn blue" onclick="quickDate(activeDateIndex,0);closeDateQuickModal();">今天</button>
+<button class="btn green" onclick="quickDate(activeDateIndex,1);closeDateQuickModal();">明天</button>
+<button class="btn orange" onclick="quickDate(activeDateIndex,2);closeDateQuickModal();">後天</button>
+<input type="date" id="modalDateInput" style="padding:10px;border:1px solid #ccc;border-radius:8px;">
+<button class="btn secondary" onclick="applyCustomDate()">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path>
+</svg>
+選擇日期
+</button>
+<button class="btn red" onclick="closeDateQuickModal()">取消</button>
+</div>
+</div>
+</div>
+`;
+
+function initApp() {
+    document.getElementById('app').innerHTML = AppTemplate;
+    
+    const linkModeSelect = document.getElementById('linkMode');
+    if(linkModeSelect){
+        linkModeSelect.value = linkMode;
+    }
+    
+    const savedTheme = localStorage.getItem('dispatch_theme') || 'theme-dark';
+    document.documentElement.className = savedTheme;
+    const themeSelect = document.getElementById('themeSelect');
+    if(themeSelect) {
+        themeSelect.value = savedTheme;
+    }
+    
+    setupEvents();
+    initFiltersAndEvents();
+    render();
+}
+
+function setupEvents() {
+    const tbody = document.getElementById('tbody');
+    if(tbody) {
+        tbody.addEventListener('click', e => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+            const action = btn.dataset.action;
+            const index = Number(btn.dataset.index);
+            
+            if (action === 'openDateQuickModal') openDateQuickModal(index);
+            else if (action === 'openDateQuickModalDisplay') openDateQuickModal(index, 'display');
+            else if (action === 'openCompare') openCompare(index);
+            else if (action === 'deleteDoc') deleteDoc(index);
+            else if (action === 'setFilter') setFilter(btn.dataset.filter, btn);
+        });
+
+        tbody.addEventListener('change', e => {
+            if (!e.target.dataset.action) return;
+            const action = e.target.dataset.action;
+            const index = Number(e.target.dataset.index);
+            const val = e.target.value;
+            
+            if (action === 'updateSend') updateSend(index, val);
+            else if (action === 'updateDisplay') updateDisplay(index, val);
+            else if (action === 'changeStatus') changeStatus(index, val);
+        });
+
+        tbody.addEventListener('input', e => {
+            if (!e.target.dataset.action) return;
+            const action = e.target.dataset.action;
+            const index = Number(e.target.dataset.index);
+            const val = e.target.value;
+            
+            if (action === 'updateNote') updateNote(index, val);
+        });
+    }
+    
+    // Add setFilter delegation for sidebar links
+    const sidebar = document.querySelector('.sidebar');
+    if(sidebar) {
+        sidebar.addEventListener('click', e => {
+            const btn = e.target.closest('[data-action="setFilter"]');
+            if (btn) setFilter(btn.dataset.filter, btn);
+        });
+    }
+}
+
+
 let docs = JSON.parse(localStorage.getItem('dispatch_v7_stable') || '[]');
 
 docs.forEach(d=>{
@@ -212,19 +511,40 @@ const mode=getEffectiveLinkMode();
 return mode === 'internal' ? '公司內連結' : '公司外連結';
 }
 
-let toastTimer=null;
-function showToast(message){
-let toast=document.getElementById('toast');
-if(!toast){
-toast=document.createElement('div');
-toast.id='toast';
-toast.className='toast';
-document.body.appendChild(toast);
+let toastQueue = [];
+let isToastShowing = false;
+
+function showToast(message) {
+  toastQueue.push(message);
+  processToastQueue();
 }
-toast.textContent=message;
-toast.classList.add('show');
-clearTimeout(toastTimer);
-toastTimer=setTimeout(()=>toast.classList.remove('show'),2200);
+
+function processToastQueue() {
+  if (isToastShowing || toastQueue.length === 0) return;
+  
+  isToastShowing = true;
+  const message = toastQueue.shift();
+  
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  
+  toast.textContent = message;
+  // Trigger reflow
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      isToastShowing = false;
+      processToastQueue();
+    }, 400);
+  }, 2200);
 }
 
 function save(){
@@ -699,8 +1019,8 @@ reader.readAsText(file);
 function render(){
 
 const tbody = document.getElementById('tbody');
-
 tbody.innerHTML='';
+const fragment = document.createDocumentFragment();
 
 const isDonePage = currentFilter==='done';
 
@@ -834,7 +1154,7 @@ tr.classList.add('overdue-row');
 }
 
 if(d.sendDate && d.displayDate && d.sendDate!==d.displayDate){
-tr.style.background='#fff3e0';
+tr.classList.add('date-diff-row');
 }
 
 tr.innerHTML = `
@@ -851,40 +1171,40 @@ ${d.url ?
 <td>${safeHandler}</td>
 
 <td>
-<div class="pill send-pill" onclick="openDateQuickModal(${i})">
+<div class="pill send-pill" data-action="openDateQuickModal" data-index="${i}">
 ${d.sendDate ? d.sendDate.replace(/^\d{4}-/,'').replace('-','/') : '未設定'}
 </div>
-<input id="send_${i}" class="hidden-date" type="date" value="${d.sendDate}" onchange="updateSend(${i},this.value)">
+<input id="send_${i}" class="hidden-date" type="date" value="${d.sendDate}" data-action="updateSend" data-index="${i}">
 </td>
 
 <td>
-<div class="pill display-pill" onclick="openDateQuickModal(${i},'display')">
+<div class="pill display-pill" data-action="openDateQuickModalDisplay" data-index="${i}">
 ${d.displayDate ? d.displayDate.replace(/^\d{4}-/,'').replace('-','/') : '未設定'}
 </div>
-<input id="display_${i}" class="hidden-date" type="date" value="${d.displayDate}" onchange="updateDisplay(${i},this.value)">
+<input id="display_${i}" class="hidden-date" type="date" value="${d.displayDate}" data-action="updateDisplay" data-index="${i}">
 </td>
 
 <td>
 <select 
 class="status-btn ${d.status==='已發文'?'done':'pending'}"
-onchange="changeStatus(${i},this.value)">
+data-action="changeStatus" data-index="${i}">
 <option value="待發" ${d.status==='待發'?'selected':''}>待發</option>
 <option value="已發文" ${d.status==='已發文'?'selected':''}>已發文</option>
 </select>
 </td>
 
 <td>
-<input class="note" value="${safeNote}" oninput="updateNote(${i},this.value)" placeholder="輸入備註">
+<input class="note" value="${safeNote}" data-action="updateNote" data-index="${i}" placeholder="輸入備註">
 </td>
 
 ${isDonePage ? `<td class="done-cell">${safeDoneTime}</td>` : ``}
 <td>
-${dispatchUrl ? `<button class="btn secondary" style="padding:6px 10px;min-height:34px;margin-right:4px;" onclick="openCompare(${i})" title="同時開啟發文作業與電子表單">
+${dispatchUrl ? `<button class="btn secondary" style="padding:6px 10px;min-height:34px;margin-right:4px;" data-action="openCompare" data-index="${i}" title="同時開啟發文作業與電子表單">
 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <rect x="3" y="4" width="7" height="16" rx="1"></rect><rect x="14" y="4" width="7" height="16" rx="1"></rect>
 </svg>
 </button>` : ``}
-<button class="btn danger-soft" style="padding:6px 10px;min-height:34px;" onclick="deleteDoc(${i})" title="刪除">
+<button class="btn danger-soft" style="padding:6px 10px;min-height:34px;" data-action="deleteDoc" data-index="${i}" title="刪除">
 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="m6 7 1 14h10l1-14"></path>
 </svg>
@@ -892,9 +1212,10 @@ ${dispatchUrl ? `<button class="btn secondary" style="padding:6px 10px;min-heigh
 </td>
 `;
 
-tbody.appendChild(tr);
+fragment.appendChild(tr);
 
 });
+tbody.appendChild(fragment);
 
 const selectAll=document.getElementById('selectAllVisible');
 const visibleChecks=[...document.querySelectorAll('.batch-check')];
@@ -1517,6 +1838,7 @@ w.print();
 
 }
 
+function initFiltersAndEvents() {
 document.getElementById('search').addEventListener('input',()=>{
 currentPage=1;
 render();
@@ -1587,10 +1909,11 @@ currentFilter === 'done'
 ? 'inline-block'
 : 'none';
 
-const linkModeSelect=document.getElementById('linkMode');
-if(linkModeSelect){
-linkModeSelect.value=linkMode;
+
+
 }
 
-render();
+initApp();
+
+
 
