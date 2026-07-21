@@ -230,7 +230,7 @@ white-space:pre-wrap;
 </div>
 `;
 
-function initApp() {
+async function initApp() {
     document.getElementById('app').innerHTML = AppTemplate;
     
     const linkModeSelect = document.getElementById('linkMode');
@@ -243,6 +243,21 @@ function initApp() {
     const themeSelect = document.getElementById('themeSelect');
     if(themeSelect) {
         themeSelect.value = savedTheme;
+    }
+    
+    const dbData = await getDocsFromDB();
+    if (dbData) {
+        docs = dbData;
+    } else {
+        const oldData = localStorage.getItem('dispatch_v7_stable');
+        if (oldData) {
+            docs = JSON.parse(oldData);
+            normalizeDates(docs);
+            await saveDocsToDB(docs);
+            console.log('Migrated data from LocalStorage to IndexedDB');
+        } else {
+            docs = [];
+        }
     }
     
     setupEvents();
@@ -298,67 +313,81 @@ function setupEvents() {
 }
 
 
-let docs = JSON.parse(localStorage.getItem('dispatch_v7_stable') || '[]');
+const DB_NAME = 'DispatchManagerDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'docs_store';
 
-docs.forEach(d=>{
-
-if(d.status !== '已發文' || !d.doneTime) return;
-
-if(
-d.doneTime.includes('上午') ||
-d.doneTime.includes('下午')
-){
-
-const m = d.doneTime.match(
-/(\d+)\/(\d+)\/(\d+)\s*(上午|下午)(\d+):(\d+):(\d+)/
-);
-
-if(m){
-
-let hour = Number(m[5]);
-
-if(m[4] === '下午' && hour < 12){
-    hour += 12;
+function initDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME);
+            }
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
 }
 
-if(m[4] === '上午' && hour === 12){
-    hour = 0;
+async function getDocsFromDB() {
+    try {
+        const db = await initDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.get('docs');
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    } catch(e) {
+        console.error("IndexedDB error:", e);
+        return null;
+    }
 }
 
-d.doneTimestamp = new Date(
-`${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${m[6]}`
-).getTime();
-
-d.doneTime =
-`${m[1]}/${String(m[2]).padStart(2,'0')}/${String(m[3]).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${String(m[6]).padStart(2,'0')}`;
-
+async function saveDocsToDB(data) {
+    try {
+        const db = await initDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.put(data, 'docs');
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    } catch(e) {
+        console.error("IndexedDB error on save:", e);
+    }
 }
 
-}else{
-
-const dateObj = new Date(d.doneTime);
-
-if(!isNaN(dateObj)){
-
-d.doneTimestamp = dateObj.getTime();
-
-d.doneTime =
-dateObj.getFullYear() + '/' +
-String(dateObj.getMonth()+1).padStart(2,'0') + '/' +
-String(dateObj.getDate()).padStart(2,'0') + ' ' +
-String(dateObj.getHours()).padStart(2,'0') + ':' +
-String(dateObj.getMinutes()).padStart(2,'0');
-
+function normalizeDates(docsArray) {
+    docsArray.forEach(d=>{
+        if(d.status !== '已發文' || !d.doneTime) return;
+        if(
+            d.doneTime.includes('上午') ||
+            d.doneTime.includes('下午')
+        ){
+            const m = d.doneTime.match(/(\d+)\/(\d+)\/(\d+)\s*(上午|下午)(\d+):(\d+):(\d+)/);
+            if(m){
+                let hour = Number(m[5]);
+                if(m[4] === '下午' && hour < 12){ hour += 12; }
+                if(m[4] === '上午' && hour === 12){ hour = 0; }
+                d.doneTimestamp = new Date(`${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${m[6]}`).getTime();
+                d.doneTime = `${m[1]}/${String(m[2]).padStart(2,'0')}/${String(m[3]).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${String(m[6]).padStart(2,'0')}`;
+            }
+        }else{
+            const dateObj = new Date(d.doneTime);
+            if(!isNaN(dateObj)){
+                d.doneTimestamp = dateObj.getTime();
+                d.doneTime = dateObj.getFullYear() + '/' + String(dateObj.getMonth()+1).padStart(2,'0') + '/' + String(dateObj.getDate()).padStart(2,'0') + ' ' + String(dateObj.getHours()).padStart(2,'0') + ':' + String(dateObj.getMinutes()).padStart(2,'0');
+            }
+        }
+    });
 }
 
-}
-
-});
-
-localStorage.setItem(
-'dispatch_v7_stable',
-JSON.stringify(docs)
-);
+let docs = [];
 
 let currentFilter = 'pending';
 let selectedForecastDate = '';
@@ -548,7 +577,7 @@ function processToastQueue() {
 }
 
 function save(){
-localStorage.setItem('dispatch_v7_stable',JSON.stringify(docs));
+saveDocsToDB(docs).catch(console.error);
 }
 
 function setLinkMode(value){
