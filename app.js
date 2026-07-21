@@ -238,7 +238,7 @@ function initApp() {
         linkModeSelect.value = linkMode;
     }
     
-    const savedTheme = localStorage.getItem('dispatch_theme') || 'theme-dark';
+    const savedTheme = localStorage.getItem('dispatch_theme') ?? 'theme-dark';
     document.documentElement.className = savedTheme;
     const themeSelect = document.getElementById('themeSelect');
     if(themeSelect) {
