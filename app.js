@@ -1395,6 +1395,7 @@ box.innerHTML='';
 
 const today = new Date();
 
+const weekNames = ['日','一','二','三','四','五','六'];
 for(let i=0;i<7;i++){
 
 const d = new Date();
@@ -1403,6 +1404,7 @@ d.setDate(today.getDate()+i);
 const yyyy=d.getFullYear();
 const mm=String(d.getMonth()+1).padStart(2,'0');
 const dd=String(d.getDate()).padStart(2,'0');
+const dayName = weekNames[d.getDay()];
 
 const dateStr=`${yyyy}-${mm}-${dd}`;
 
@@ -1426,7 +1428,7 @@ if(count>=5){
 div.classList.add('forecast-danger');
 }
 
-div.innerHTML=`<span>${mm}/${dd}</span><span>${count} 件</span>`;
+div.innerHTML=`<span>${mm}/${dd} (${dayName})</span><span>${count} 件</span>`;
 
 box.appendChild(div);
 
