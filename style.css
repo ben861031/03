@@ -280,8 +280,8 @@ word-break:break-word;
 .overdue-row td{background:#fef2f2 !important}
 .overdue-row:hover td{background:#fee2e2 !important}
 
-.date-diff-row td{background:#fdf2f8 !important}
-.date-diff-row:hover td{background:#fce7f3 !important}
+.date-diff-row td{background:#fffbeb !important}
+.date-diff-row:hover td{background:#fef3c7 !important}
 .pill{padding:6px 12px;border-radius:999px;font-weight:600;display:inline-block;cursor:pointer;min-width:70px;text-align:center;font-size:13px;transition:all 0.2s}
 .pill:hover{filter:brightness(0.95)}
 .send-pill{background:#eff6ff;color:#2563eb}
