@@ -309,6 +309,9 @@ function setupEvents() {
             const btn = e.target.closest('[data-action="setFilter"]');
             if (btn) setFilter(btn.dataset.filter, btn);
         });
+        sidebar.addEventListener('mouseleave', () => {
+            sidebar.scrollTo({ top: 0, behavior: 'smooth' });
+        });
     }
 }
 
