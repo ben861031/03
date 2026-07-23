@@ -222,8 +222,8 @@ pointer-events:auto;
 .excel-export:hover{background:#047857;border-color:#047857}
 .secondary{background:white;color:#475569;border-color:#cbd5e1}
 .secondary:hover{background:#f8fafc;border-color:#94a3b8}
-.review-link{background:white;color:#ea580c;border-color:#fed7aa}
-.review-link:hover{background:#fff7ed;border-color:#fb923c}
+.review-link{background:white;color:#475569;border-color:#cbd5e1}
+.review-link:hover{background:#f8fafc;border-color:#94a3b8}
 .primary-import{background:white;color:var(--primary);border-color:#bfdbfe}
 .primary-import:hover{background:#eff6ff;border-color:var(--primary)}
 .success-soft{background:white;color:#059669;border-color:#a7f3d0}
