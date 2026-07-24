@@ -1229,7 +1229,7 @@ data-action="changeStatus" data-index="${i}">
 </td>
 
 <td>
-<input class="note" value="${safeNote}" data-action="updateNote" data-index="${i}" placeholder="輸入備註">
+<input class="note" value="${safeNote}" title="${safeNote}" data-action="updateNote" data-index="${i}" placeholder="輸入備註">
 </td>
 
 ${isDonePage ? `<td class="done-cell">${safeDoneTime}</td>` : ``}
