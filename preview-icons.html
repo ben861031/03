@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logo 圖示預覽</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body {
+    background-color: #f8fafc; /* 淺灰底色，模擬側邊欄 */
+    font-family: "Inter", "Noto Sans TC", sans-serif;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    color: #0f172a; /* 模擬修改後的深色 Logo */
+  }
+  .preview-card {
+    background: white;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 600px;
+  }
+  .logo-mock {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .desc {
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  h2 {
+    margin-bottom: 10px;
+    color: #334155;
+  }
+</style>
+</head>
+<body>
+
+  <h2>請挑選您最喜歡的 Logo 圖示組合：</h2>
+
+  <div class="preview-card">
+    <div class="logo-mock">
+      <!-- 1. 紙飛機 -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" style="width: 24px; height: 24px;">
+        <path d="m22 2-7 20-4-9-9-4Z"></path>
+        <path d="M22 2 11 13"></path>
+      </svg>
+      發文時程管理平台
+    </div>
+    <div class="desc">方案 1：紙飛機 (Send)</div>
+  </div>
+
+  <div class="preview-card">
+    <div class="logo-mock">
+      <!-- 2. 專業公文 -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" style="width: 24px; height: 24px;">
+        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+        <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+        <path d="M10 9H8"></path>
+        <path d="M16 13H8"></path>
+        <path d="M16 17H8"></path>
+      </svg>
+      發文時程管理平台
+    </div>
+    <div class="desc">方案 2：專業公文 (File)</div>
+  </div>
+
+  <div class="preview-card">
+    <div class="logo-mock">
+      <!-- 3. 時程行事曆 -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" style="width: 24px; height: 24px;">
+        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+        <line x1="16" x2="16" y1="2" y2="6"></line>
+        <line x1="8" x2="8" y1="2" y2="6"></line>
+        <line x1="3" x2="21" y1="10" y2="10"></line>
+        <path d="M8 14h.01"></path>
+        <path d="M12 14h.01"></path>
+        <path d="M16 14h.01"></path>
+        <path d="M8 18h.01"></path>
+        <path d="M12 18h.01"></path>
+        <path d="M16 18h.01"></path>
+      </svg>
+      發文時程管理平台
+    </div>
+    <div class="desc">方案 3：時程行事曆 (Calendar)</div>
+  </div>
+
+  <div class="preview-card">
+    <div class="logo-mock">
+      <!-- 4. 核准印章 -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" style="width: 24px; height: 24px;">
+        <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"></path>
+        <path d="m9 12 2 2 4-4"></path>
+      </svg>
+      發文時程管理平台
+    </div>
+    <div class="desc">方案 4：核准印章 (Badge Check)</div>
+  </div>
+
+  <div class="preview-card">
+    <div class="logo-mock">
+      <!-- 5. 收發件公文匣 -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" style="width: 24px; height: 24px;">
+        <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
+        <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+      </svg>
+      發文時程管理平台
+    </div>
+    <div class="desc">方案 5：收件匣 (Inbox)</div>
+  </div>
+
+  <div class="preview-card">
+    <div class="logo-mock">
+      <!-- 6. 檔案歸檔 -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" style="width: 24px; height: 24px;">
+        <rect width="20" height="5" x="2" y="4" rx="2"></rect>
+        <path d="M4 9v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"></path>
+        <path d="M10 13h4"></path>
+      </svg>
+      發文時程管理平台
+    </div>
+    <div class="desc">方案 6：檔案歸檔 (Archive)</div>
+  </div>
+
+</body>
+</html>
