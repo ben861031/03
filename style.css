@@ -145,7 +145,7 @@ width:320px;
 padding:20px;
 overflow:auto;
 }
-.logo{color:var(--sidebar-text);
+.logo{color:var(--sidebar-active-text);
 font-size:22px;
 font-weight:700;
 margin-bottom:24px;
