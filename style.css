@@ -568,8 +568,20 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   }
   .main {
     margin-left: 0 !important;
+    padding: 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .card {
     padding: 16px;
-    width: 100vw;
+  }
+  .card h2 {
+    font-size: 24px;
   }
   .topbar {
     flex-wrap: wrap;
