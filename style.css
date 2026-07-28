@@ -581,7 +581,7 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   }
   .main {
     margin-left: 0 !important;
-    padding: 12px;
+    padding: 68px 12px 12px 12px;
     width: 100%;
     box-sizing: border-box;
   }
@@ -604,10 +604,44 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   .page-title-wrap {
     display: flex;
     align-items: center;
-    width: 100%;
+    justify-content: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 56px;
+    background: #ffffff;
+    z-index: 8000;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    padding: 0;
+  }
+  .page-title-wrap h1 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    color: #1e293b;
   }
   .mobile-menu-btn {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    left: 8px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: transparent;
+    color: #475569;
+    border: none;
+    padding: 0;
+    transition: background 0.2s;
+  }
+  .mobile-menu-btn:active {
+    background: #f1f5f9;
+  }
+  .mobile-menu-btn svg {
+    width: 24px;
+    height: 24px;
   }
   .sync-indicator {
     top: auto !important;
