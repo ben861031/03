@@ -275,13 +275,17 @@ async function initApp() {
     if (!token || !account) {
         document.getElementById('loginModal').classList.remove('hidden');
     } else {
-        const success = await loadDataAndRender();
-        if(success) {
+        const result = await loadDataAndRender();
+        if(result && result.success) {
             document.getElementById('loginModal').classList.add('hidden');
         } else {
-            document.getElementById('loginModal').classList.remove('hidden');
-            localStorage.removeItem('syncToken');
-            localStorage.removeItem('syncAccount');
+            if (result && result.reason === 'network') {
+                document.getElementById('app').innerHTML = `<div style="padding:40px;text-align:center;color:#64748b;font-size:16px;margin-top:20vh;">無法連接至雲端伺服器<br>請檢查網路狀態後再試<br><br><button class="btn primary" onclick="location.reload()">重新載入</button></div>`;
+            } else {
+                document.getElementById('loginModal').classList.remove('hidden');
+                localStorage.removeItem('syncToken');
+                localStorage.removeItem('syncAccount');
+            }
         }
     }
     
@@ -351,16 +355,16 @@ async function logout() {
 
 
 async function loadDataAndRender() {
-    const dbData = await fetchFromCloud();
-    if (dbData) {
-        docs = dbData;
+    const result = await fetchFromCloud();
+    if (result && result.success) {
+        docs = result.data;
         normalizeDates(docs);
         setupEvents();
         initFiltersAndEvents();
         render();
-        return true;
+        return { success: true };
     }
-    return false;
+    return result;
 }
 
 function setupEvents() {
@@ -444,15 +448,14 @@ async function fetchFromCloud() {
     const json = await res.json();
     if(json.error) {
       if (fsLoader) fsLoader.classList.add('hidden');
-      return null;
+      return { success: false, reason: 'auth' };
     }
     if (fsLoader) fsLoader.classList.add('hidden');
-    return json;
+    return { success: true, data: json };
   } catch(e) {
-    console.error(e);
-    alert("網路連線錯誤");
+    console.error("fetchFromCloud network error:", e);
     if (fsLoader) fsLoader.classList.add('hidden');
-    return null;
+    return { success: false, reason: 'network' };
   }
 }
 
