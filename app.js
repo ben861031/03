@@ -62,9 +62,13 @@ const AppTemplate = `
 </span>
 </div>
 </div>
+<div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
 <div class="main">
 <div class="topbar">
+<div class="page-title-wrap">
+<button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
 <h1 id="pageTitle">尚待發文</h1>
+</div>
 <div class="top-actions">
 <button class="btn primary-import" onclick="openImport()">
 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -240,6 +244,15 @@ white-space:pre-wrap;
 </div>
 </div>
 `;
+
+function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('mobileOverlay');
+    if (sidebar && overlay) {
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+    }
+}
 
 async function initApp() {
     document.getElementById('app').innerHTML = AppTemplate;
@@ -755,6 +768,13 @@ currentPage = 1;
 document.querySelectorAll('.nav').forEach(v=>v.classList.remove('active'));
 
 el.classList.add('active');
+
+const sidebar = document.querySelector('.sidebar');
+const overlay = document.getElementById('mobileOverlay');
+if (sidebar && sidebar.classList.contains('mobile-open')) {
+    sidebar.classList.remove('mobile-open');
+    if(overlay) overlay.classList.remove('active');
+}
 
 const titles = {
 pending:'尚待發文',

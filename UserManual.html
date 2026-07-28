@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>發文時程管理平台 - 使用手冊</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Microsoft JhengHei';
+    line-height: 1.6;
+    color: #333;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+  }
+  .page {
+    background-color: #fff;
+    padding: 40px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    border-radius: 8px;
+  }
+  h1 {
+    color: #2c3e50;
+    text-align: center;
+    border-bottom: 2px solid #4f46e5;
+    padding-bottom: 10px;
+    margin-bottom: 30px;
+  }
+  h2 {
+    color: #1e293b;
+    border-left: 4px solid #4f46e5;
+    padding-left: 10px;
+    margin-top: 30px;
+  }
+  h3 {
+    color: #34495e;
+  }
+  p, ul, ol {
+    font-size: 15px;
+  }
+  li {
+    margin-bottom: 10px;
+  }
+  .highlight {
+    background-color: #e0e7ff;
+    padding: 12px 16px;
+    border-radius: 6px;
+    border-left: 4px solid #4f46e5;
+    margin: 15px 0;
+    font-size: 14.5px;
+  }
+  .keyboard {
+    background-color: #eee;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 13px;
+    border: 1px solid #ccc;
+  }
+  @media print {
+    body {
+      background-color: #fff;
+      padding: 0;
+    }
+    .page {
+      box-shadow: none;
+      padding: 0;
+      margin: 0;
+      border-radius: 0;
+    }
+    .print-break {
+      page-break-before: always;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <h1>發文時程管理平台 - 使用手冊</h1>
+  
+  <h2>一、系統簡介</h2>
+  <p>「發文時程管理平台」是一款專為企業與團隊打造的高效發文排程與管理工具。系統具備無縫的 Google Sheets 雲端同步能力，讓團隊成員能夠即時掌握發文進度，並提供批次匯入、線上簽核、以及防護嚴密的登入稽核機制。</p>
+
+  <h2>二、登入與權限管理</h2>
+  <h3>1. 系統登入</h3>
+  <ul>
+    <li>開啟系統網頁後，輸入系統管理員配發的<strong>員工編號</strong>與<strong>密碼</strong>。</li>
+    <li>系統預設為「持久登入」狀態，重新整理網頁（<span class="keyboard">F5</span>）或關閉瀏覽器再次開啟，皆無須重新登入。</li>
+  </ul>
+  
+  <h3>2. 登出機制與稽核</h3>
+  <ul>
+    <li>若需登出（例如切換帳號或共用電腦），請點擊左側邊欄最下方的<strong>「登出系統」</strong>按鈕。</li>
+    <li><strong>雙向時間紀錄</strong>：使用者的每一筆「登入」與「登出」時間，皆會自動被記錄於雲端後台（Google Sheets 的「登入紀錄」分頁）中，方便管理員隨時稽核人員進出系統的時間。</li>
+  </ul>
+
+  <h2>三、核心作業流程教學</h2>
+  
+  <h3>1. 匯入待辦發文 (批次匯入)</h3>
+  <div class="highlight">
+    💡 <strong>操作情境</strong>：每天從公文系統（如 SinoSign 等）複製一份「待處理發文」的報表，一次貼進來管理。
+  </div>
+  <ol>
+    <li>在畫面上方，點擊藍色的 <strong>「批次匯入」</strong> 按鈕。</li>
+    <li>此時會彈出一個文字框，請將您複製好的 Excel 或 Word 表格資料（包含案號、主旨、承辦人等）直接<strong>貼上（Ctrl+V）</strong>。</li>
+    <li>點擊 <strong>「解析資料」</strong>，系統會自動智慧辨識並對齊您的欄位。如果有欄位跑掉，可以用欄位上方的下拉選單手動修正對應關係。</li>
+    <li>確認下方預覽無誤後，點擊 <strong>「確定匯入」</strong>。這些資料就會自動儲存到您的清單與 Google 雲端中。</li>
+    <li><strong>自動完成機制</strong>：如果系統發現「昨天還在待辦清單上」的公文，在「今天您匯入的新資料」裡卻消失了，系統會自動判定該公文已結案，並幫您移到「累計已發」中！</li>
+  </ol>
+
+  <h3>2. 挑選並產出發文清單</h3>
+  <div class="highlight">
+    💡 <strong>操作情境</strong>：準備要把幾份公文發布出去，需要一份清單傳到 LINE 群組或 Email 通知相關人員。
+  </div>
+  <ol>
+    <li>在左側邊欄點擊 <strong>「尚待發文」</strong> 或 <strong>「今日待發」</strong>。</li>
+    <li>在公文列表中，於最左側<strong>勾選</strong>您準備要處理的項目（可複選多筆）。</li>
+    <li>點擊畫面上方的 <strong>「發文作業」</strong> 按鈕。</li>
+    <li>系統會彈出一個視窗，幫您把剛才勾選的公文，排版成乾淨整齊的純文字清單。</li>
+    <li>點擊 <strong>「複製文字清單」</strong>，接著您就可以前往 LINE 或 Email 直接貼上（Ctrl+V）發送了！</li>
+  </ol>
+
+  <h3 class="print-break">3. 傳送線上簽核連結</h3>
+  <div class="highlight">
+    💡 <strong>操作情境</strong>：發文前，需要將清單與內容提供給主管做線上確認與簽核。
+  </div>
+  <ol>
+    <li>同樣先在列表中，<strong>勾選</strong>要呈報給主管的公文項目。</li>
+    <li>點擊畫面上方的 <strong>「線上簽核」</strong> 按鈕。</li>
+    <li>系統會自動產生一串專屬的<strong>「簽核專屬網址」</strong>。</li>
+    <li>請點擊一旁的複製按鈕，並將這串網址傳給主管。主管點開後，即可在一個唯讀的乾淨介面中，透過手機或電腦輕鬆確認所有公文詳情。</li>
+  </ol>
+
+  <h3>4. 手動設定日期、完成與刪除</h3>
+  <ol>
+    <li><strong>設定預定發文日</strong>：在列表中，您可以直接點擊項目的日期欄位，修改為您預計發布的日期。</li>
+    <li><strong>批次完成</strong>：當發文程序確實完成後，勾選該項目並點擊畫面上方的 <strong>「批次完成」</strong> 按鈕。該項目會立刻被標上當前時間，並移入「累計已發」的分類。</li>
+    <li><strong>批次刪除</strong>：若公文被取消或一開始匯入錯誤，勾選後點擊 <strong>「批次刪除」</strong>，即可將其永久移除。</li>
+  </ol>
+
+  <h2>四、畫面介面與檢視說明</h2>
+  <p>左側邊欄提供多種視角與圖表，協助您快速掌握工作重點：</p>
+  <ul>
+    <li><strong>未來一週發文預測</strong>：側邊欄下方會顯示未來七天的公文量趨勢圖，讓您提早掌握接下來一週的工作負載。</li>
+    <li><strong>尚待發文</strong>：您當前所有的待辦發文清單。</li>
+    <li><strong>未設定日期</strong>：沒有指定「預定發文日」的清單，適合用來集中處理那些「等通知再發」的公文。</li>
+    <li><strong>今日待發</strong>：根據您設定的發文日期，系統會自動將「今天」必須發布的項目集中在這裡，這通常是您每天的首要工作清單。</li>
+    <li><strong>已逾期</strong>：超過設定的發文日期，卻還沒被標記「完成」的項目。請優先處理這些閃著紅字的公文。</li>
+    <li><strong>累計已發</strong>：歷史紀錄區。您可以在這裡點擊畫面上方的 <strong>「匯出 Excel」</strong> 按鈕，將過去的發文紀錄下載成報表備查。</li>
+  </ul>
+
+  <h2>五、資料安全與備份</h2>
+  <ul>
+    <li><strong>雲端即時同步</strong>：您在系統上的任何新增、修改、完成與刪除，都會在背景自動同步至 Google Sheets 雲端資料庫，無須手動按儲存。</li>
+    <li><strong>本機備份匯出/匯入</strong>：點擊左側最下方的「匯出備份」，可將目前的資料打包成一個檔案下載至電腦中。若遇到雲端連線異常，可透過「匯入備份」還原本機資料。</li>
+  </ul>
+</div>
+
+</body>
+</html>
