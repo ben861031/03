@@ -979,12 +979,12 @@ alert('未解析到有效的發文資料，未變更任何既有資料。請確�
 return;
 }
 
-const importedSet = new Set(importedDocNos);
-const newItems = parsedItems.filter(item=>!docs.some(d=>d.docNo===item.docNo));
-const existingItems = parsedItems.filter(item=>docs.some(d=>d.docNo===item.docNo));
+const importedSet = new Set(importedDocNos.map(String));
+const newItems = parsedItems.filter(item=>!docs.some(d=>String(d.docNo)===String(item.docNo)));
+const existingItems = parsedItems.filter(item=>docs.some(d=>String(d.docNo)===String(item.docNo)));
 const autoDoneItems = docs.filter(d=>
 d.status==='待發' &&
-!importedSet.has(d.docNo)
+!importedSet.has(String(d.docNo))
 );
 
 pendingImportPlan = {
@@ -1034,7 +1034,7 @@ return;
 
 pendingImportPlan.parsedItems.forEach(item=>{
 
-const existingDoc=docs.find(d=>d.docNo===item.docNo);
+const existingDoc=docs.find(d=>String(d.docNo)===String(item.docNo));
 
 if(existingDoc){
 existingDoc.sortOrder=item.sortOrder;
@@ -1323,33 +1323,33 @@ tr.classList.add('date-diff-row');
 }
 
 tr.innerHTML = `
-<td><input type="checkbox" class="batch-check" data-index="${i}"></td>
+<td data-label="選擇"><input type="checkbox" class="batch-check" data-index="${i}"></td>
 
-<td>${safeDocNo}</td>
+<td data-label="表單編號">${safeDocNo}</td>
 
-<td>
+<td data-label="主旨">
 ${d.url ? 
 `<a class="subject-link" href="${safeUrl}" target="_blank" rel="noopener" title="${escapeHTML(getLinkModeLabel())}">${safeSubject}</a>` 
 : safeSubject}
 </td>
 
-<td>${safeHandler}</td>
+<td data-label="承辦人">${safeHandler}</td>
 
-<td>
+<td data-label="預定發文">
 <div class="pill send-pill" data-action="openDateQuickModal" data-index="${i}">
 ${d.sendDate ? d.sendDate.replace(/^\d{4}-/,'').replace('-','/') : '未設定'}
 </div>
 <input id="send_${i}" class="hidden-date" type="date" value="${d.sendDate}" data-action="updateSend" data-index="${i}">
 </td>
 
-<td>
+<td data-label="顯示發文">
 <div class="pill display-pill" data-action="openDateQuickModalDisplay" data-index="${i}">
 ${d.displayDate ? d.displayDate.replace(/^\d{4}-/,'').replace('-','/') : '未設定'}
 </div>
 <input id="display_${i}" class="hidden-date" type="date" value="${d.displayDate}" data-action="updateDisplay" data-index="${i}">
 </td>
 
-<td>
+<td data-label="狀態">
 <select 
 class="status-btn ${d.status==='已發文'?'done':'pending'}"
 data-action="changeStatus" data-index="${i}">
@@ -1358,12 +1358,12 @@ data-action="changeStatus" data-index="${i}">
 </select>
 </td>
 
-<td>
+<td data-label="備註">
 <input class="note" value="${safeNote}" title="${safeNote}" data-action="updateNote" data-index="${i}" placeholder="輸入備註">
 </td>
 
-${isDonePage ? `<td class="done-cell">${safeDoneTime}</td>` : ``}
-<td>
+${isDonePage ? `<td data-label="完成時間" class="done-cell">${safeDoneTime}</td>` : ``}
+<td data-label="操作">
 ${dispatchUrl ? `<button class="btn secondary" style="padding:6px 10px;min-height:34px;margin-right:4px;" data-action="openCompare" data-index="${i}" title="同時開啟發文作業與電子表單">
 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <rect x="3" y="4" width="7" height="16" rx="1"></rect><rect x="14" y="4" width="7" height="16" rx="1"></rect>
