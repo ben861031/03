@@ -341,7 +341,8 @@ async function initApp() {
                 }
             }
         } catch(e) {
-            document.getElementById('loginError').innerText = "網路連線錯誤";
+            console.error("Login Error:", e);
+            document.getElementById('loginError').innerText = "連線失敗：" + (e.message || "發生未知錯誤");
             document.getElementById('loginError').classList.remove('hidden');
         }
         document.getElementById('loginBtn').innerText = "登入";
