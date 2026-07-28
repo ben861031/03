@@ -322,9 +322,10 @@ async function initApp() {
             
             // GAS 輕量優化：如果後台直接返回資料，省去第二趟 fetchFromCloud
             if (json.data && Array.isArray(json.data)) {
-                let docs = normalizeDates(json.data);
-                docs.sort(sortDocs);
-                window.docsData = docs;
+                docs = json.data;
+                normalizeDates(docs);
+                setupEvents();
+                initFiltersAndEvents();
                 render();
                 document.getElementById('loginModal').classList.add('hidden');
                 document.getElementById('loginError').classList.add('hidden');
