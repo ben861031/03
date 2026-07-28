@@ -226,7 +226,7 @@ white-space:pre-wrap;
 </div>
 </div>
 <div class="modal" id="dateQuickModal">
-<div class="modal-box" style="width:380px;">
+<div class="modal-box" style="width:380px; max-width:95%;">
 <h3 id="dateQuickModalTitle" style="margin-bottom:15px;">設定發文日期</h3>
 <div style="display:flex;flex-direction:column;gap:8px;">
 <button class="btn blue" onclick="quickDate(activeDateIndex,0);closeDateQuickModal();">今天</button>
