@@ -53,6 +53,14 @@ const AppTemplate = `
 匯入備份
 </span>
 </div>
+<div class="nav data-nav" onclick="logout()" style="margin-top: 12px; color: var(--danger);">
+<span class="nav-label">
+<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line>
+</svg>
+登出系統
+</span>
+</div>
 </div>
 <div class="main">
 <div class="topbar">
@@ -248,24 +256,98 @@ async function initApp() {
         themeSelect.value = savedTheme;
     }
     
-    const dbData = await getDocsFromDB();
-    if (dbData) {
-        docs = dbData;
+    let account = localStorage.getItem('syncAccount');
+    let token = localStorage.getItem('syncToken');
+    
+    if (!token || !account) {
+        document.getElementById('loginModal').classList.remove('hidden');
     } else {
-        const oldData = localStorage.getItem('dispatch_v7_stable');
-        if (oldData) {
-            docs = JSON.parse(oldData);
-            normalizeDates(docs);
-            await saveDocsToDB(docs);
-            console.log('Migrated data from LocalStorage to IndexedDB');
+        const success = await loadDataAndRender();
+        if(success) {
+            document.getElementById('loginModal').classList.add('hidden');
         } else {
-            docs = [];
+            document.getElementById('loginModal').classList.remove('hidden');
+            localStorage.removeItem('syncToken');
+            localStorage.removeItem('syncAccount');
         }
     }
     
-    setupEvents();
-    initFiltersAndEvents();
-    render();
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+        const accInput = document.getElementById('loginAccount').value.trim();
+        const pwdInput = document.getElementById('loginPassword').value;
+        if(!accInput || !pwdInput) {
+            document.getElementById('loginError').innerText = "請輸入帳號與密碼";
+            document.getElementById('loginError').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('loginBtn').innerText = "連線中...";
+        
+        try {
+            const payload = { action: 'login', account: accInput, token: pwdInput };
+            const res = await fetch(CLOUD_API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            const json = await res.json();
+            if (json.error) {
+                document.getElementById('loginError').innerText = "帳號或密碼錯誤，請重試";
+                document.getElementById('loginError').classList.remove('hidden');
+                document.getElementById('loginBtn').innerText = "登入";
+                return;
+            }
+            
+            localStorage.setItem('syncAccount', accInput);
+            localStorage.setItem('syncToken', pwdInput);
+            
+            const success = await loadDataAndRender();
+            if(success) {
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('loginError').classList.add('hidden');
+            } else {
+                document.getElementById('loginError').innerText = "無法載入資料，請重試";
+                document.getElementById('loginError').classList.remove('hidden');
+                localStorage.removeItem('syncToken');
+                localStorage.removeItem('syncAccount');
+            }
+        } catch(e) {
+            document.getElementById('loginError').innerText = "網路連線錯誤";
+            document.getElementById('loginError').classList.remove('hidden');
+        }
+        document.getElementById('loginBtn').innerText = "登入";
+    });
+}
+
+async function logout() {
+    const account = localStorage.getItem('syncAccount');
+    const token = localStorage.getItem('syncToken');
+    if (account && token) {
+        try {
+            const payload = { action: 'logout', account: account, token: token };
+            await fetch(CLOUD_API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+        } catch(e) {
+            console.error("Logout request failed", e);
+        }
+    }
+    localStorage.removeItem('syncAccount');
+    localStorage.removeItem('syncToken');
+    location.reload();
+}
+
+
+async function loadDataAndRender() {
+    const dbData = await fetchFromCloud();
+    if (dbData) {
+        docs = dbData;
+        normalizeDates(docs);
+        setupEvents();
+        initFiltersAndEvents();
+        render();
+        return true;
+    }
+    return false;
 }
 
 function setupEvents() {
@@ -317,59 +399,84 @@ function setupEvents() {
         });
     }
 }
+const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbwEWTwEbUoO84sapf-LirsKU7d-XoNAc7gmSDS9fC-R89r0A4Ej3pPotHfZ98HkNc4/exec";
 
+function showSync(text = "同步中...") {
+  const ind = document.getElementById('syncIndicator');
+  if(ind) {
+    document.getElementById('syncText').innerText = text;
+    ind.classList.remove('hidden');
+  }
+}
 
-const DB_NAME = 'DispatchManagerDB';
-const DB_VERSION = 1;
-const STORE_NAME = 'docs_store';
+function hideSync() {
+  const ind = document.getElementById('syncIndicator');
+  if(ind) ind.classList.add('hidden');
+}
 
-function initDB() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        request.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME);
-            }
-        };
-        request.onsuccess = (e) => resolve(e.target.result);
-        request.onerror = (e) => reject(e.target.error);
+async function fetchFromCloud() {
+  const account = localStorage.getItem('syncAccount');
+  const token = localStorage.getItem('syncToken');
+  if(!account || !token) return null;
+  
+  const fsLoader = document.getElementById('fullScreenLoader');
+  const fsText = document.getElementById('fsLoaderText');
+  if (fsLoader) {
+      fsText.innerText = "系統載入中...";
+      fsLoader.classList.remove('hidden');
+  }
+  
+  try {
+    const res = await fetch(CLOUD_API_URL + "?account=" + encodeURIComponent(account) + "&token=" + encodeURIComponent(token));
+    const json = await res.json();
+    if(json.error) {
+      if (fsLoader) fsLoader.classList.add('hidden');
+      return null;
+    }
+    if (fsLoader) fsLoader.classList.add('hidden');
+    return json;
+  } catch(e) {
+    console.error(e);
+    alert("網路連線錯誤");
+    if (fsLoader) fsLoader.classList.add('hidden');
+    return null;
+  }
+}
+
+async function syncToCloud(data) {
+  const account = localStorage.getItem('syncAccount');
+  const token = localStorage.getItem('syncToken');
+  if(!account || !token) return;
+  showSync("同步至雲端...");
+  try {
+    const payload = { action: 'sync', account: account, token: token, data: data };
+    const res = await fetch(CLOUD_API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
     });
-}
-
-async function getDocsFromDB() {
-    try {
-        const db = await initDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const store = tx.objectStore(STORE_NAME);
-            const req = store.get('docs');
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(req.error);
-        });
-    } catch(e) {
-        console.error("IndexedDB error:", e);
-        return null;
+    const json = await res.json();
+    if(json.error) {
+      alert("同步失敗：" + json.error);
     }
-}
-
-async function saveDocsToDB(data) {
-    try {
-        const db = await initDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            const req = store.put(data, 'docs');
-            req.onsuccess = () => resolve();
-            req.onerror = () => reject(req.error);
-        });
-    } catch(e) {
-        console.error("IndexedDB error on save:", e);
-    }
+    hideSync();
+  } catch(e) {
+    console.error(e);
+    alert("網路連線錯誤，無法同步");
+    hideSync();
+  }
 }
 
 function normalizeDates(docsArray) {
     docsArray.forEach(d=>{
+        ['sendDate', 'displayDate'].forEach(field => {
+            if (d[field] && d[field].includes('T')) {
+                const dateObj = new Date(d[field]);
+                if (!isNaN(dateObj)) {
+                    d[field] = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
+                }
+            }
+        });
+        
         if(d.status !== '已發文' || !d.doneTime) return;
         if(
             d.doneTime.includes('上午') ||
@@ -583,7 +690,7 @@ function processToastQueue() {
 }
 
 function save(){
-saveDocsToDB(docs).catch(console.error);
+syncToCloud(docs).catch(console.error);
 }
 
 function setLinkMode(value){
