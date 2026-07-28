@@ -677,101 +677,190 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   table, thead, tbody, th, td, tr { display: block; }
   thead { display: none; }
   tr {
+    display: flex;
+    flex-wrap: wrap;
     margin-bottom: 24px;
     background: #ffffff;
     border: 1px solid rgba(0,0,0,0.06);
-    border-radius: 20px;
+    border-left: 5px solid #f59e0b;
+    border-radius: 16px;
     box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01);
     position: relative;
     overflow: hidden;
     padding: 0;
   }
+  tr.date-diff-row { border-left-color: #fde047; }
+  tr.overdue-row { border-left-color: #ef4444; }
+  tr.done-row { border-left-color: #10b981; }
+
   td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 20px;
-    border-bottom: 1px solid #f1f5f9;
-    font-size: 15px;
-    font-weight: 500;
-    color: #334155;
-    text-align: right;
     width: 100% !important;
     max-width: none !important;
-    box-sizing: border-box;
-  }
-  td:last-child { border-bottom: none; }
-  td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: #94a3b8;
-    font-size: 14px;
-    margin-right: auto;
-    flex-shrink: 0;
-    text-align: left;
-  }
-  
-  /* Header: Checkbox & Doc No */
-  td[data-label="選擇"] {
-    background: linear-gradient(to right, #f8fafc, #ffffff);
-    border-bottom: none;
-    padding: 16px 20px 8px 20px;
-    justify-content: flex-start;
-    position: relative;
-    height: 52px;
-  }
-  td[data-label="選擇"] input[type="checkbox"] {
-    transform: scale(1.4);
-    margin-right: 14px;
-    accent-color: var(--primary);
-  }
-  td[data-label="選擇"]::before { display: none; }
-  
-  td[data-label="表單編號"] {
-    position: absolute;
-    top: 0;
-    left: 48px;
-    height: 52px;
     display: flex;
     align-items: center;
-    padding: 0 16px 0 6px;
+    box-sizing: border-box;
+    font-size: 14px;
+  }
+  td::before {
+    display: none;
+  }
+
+  /* Header: Checkbox & Doc No & Status */
+  td[data-label="選擇"] {
+    width: auto !important;
+    padding: 16px 12px 4px 16px;
+    border-bottom: none;
+  }
+  td[data-label="選擇"] input[type="checkbox"] {
+    transform: scale(1.3);
+    margin: 0;
+    accent-color: var(--primary);
+  }
+  
+  td[data-label="表單編號"] {
+    width: auto !important;
+    flex: 1;
+    padding: 16px 16px 4px 4px;
     border: none;
     font-weight: 800;
-    font-size: 17px;
+    font-size: 16px;
     color: var(--primary, #3b82f6);
     background: transparent;
     letter-spacing: 0.5px;
   }
-  td[data-label="表單編號"]::before { display: none; }
+  
+  td[data-label="狀態"] {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    width: auto !important;
+    padding: 0;
+    border: none;
+  }
   
   /* Subject: Prominent & Full width */
   td[data-label="主旨"] {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 0 20px 16px 20px;
-    background: #fff;
+    padding: 8px 20px 12px 20px;
     border-bottom: 1px dashed #e2e8f0;
   }
-  td[data-label="主旨"]::before { display: none; }
   .subject-link {
     text-align: justify;
     display: block;
     font-size: 16px;
     font-weight: 600;
     color: #1e293b;
-    line-height: 1.65;
+    line-height: 1.6;
     word-break: break-word;
   }
   
-  /* Actions: Right aligned at bottom */
+  /* Metadata Grid (Handler, Dates) */
+  td[data-label="承辦人"] {
+    width: 100% !important;
+    padding: 12px 20px 4px 20px;
+    border: none;
+    color: #475569;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  td[data-label="承辦人"]::before {
+    display: inline;
+    content: "承辦人：";
+    font-size: 13px;
+    color: #94a3b8;
+    margin-right: 4px;
+  }
+  
+  td[data-label="預定發文"],
+  td[data-label="顯示發文"] {
+    width: 50% !important;
+    padding: 8px 20px 12px 20px;
+    border: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  td[data-label="預定發文"] { padding-right: 8px; }
+  td[data-label="顯示發文"] { padding-left: 8px; }
+  
+  td[data-label="預定發文"]::before {
+    display: block;
+    content: "發文日期：";
+    font-size: 12px;
+    color: #94a3b8;
+  }
+  td[data-label="顯示發文"]::before {
+    display: block;
+    content: "公文顯示日期：";
+    font-size: 12px;
+    color: #94a3b8;
+  }
+  
+  td[data-label="預定發文"] .pill,
+  td[data-label="顯示發文"] .pill {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+    padding: 8px 0;
+    border-radius: 8px;
+  }
+
+  /* Note Input */
+  td[data-label="備註"] {
+    padding: 0 20px 16px 20px;
+    border-bottom: none;
+    flex-wrap: wrap;
+  }
+  td[data-label="備註"]::before {
+    display: block;
+    content: "✏️ 備註";
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+    width: 100%;
+  }
+  td input.note {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 8px 4px;
+    border-radius: 0;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  td input.note:focus {
+    background: transparent;
+    border-color: var(--primary);
+    box-shadow: 0 1px 0 0 var(--primary);
+    outline: none;
+  }
+  
+  /* Done Time */
+  td[data-label="完成時間"] {
+    padding: 0 20px 12px 20px;
+    border: none;
+    color: #10b981;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  td[data-label="完成時間"]::before {
+    display: inline;
+    content: "✔️ 完成於";
+    margin-right: 6px;
+  }
+
+  /* Actions */
   td[data-label="操作"] {
-    background: #f8fafc;
+    background: #fafafa;
     justify-content: flex-end;
     gap: 12px;
-    border-top: 1px solid #e2e8f0;
-    padding: 14px 20px;
+    border-top: 1px solid #f1f5f9;
+    padding: 12px 20px;
   }
-  td[data-label="操作"]::before { display: none; }
   td[data-label="操作"] .icon-btn {
     background: #ffffff;
     border: 1px solid #cbd5e1;
@@ -779,17 +868,7 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
     padding: 8px 14px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
   }
-  
-  /* Inputs & selects */
-  td input.note, td input.hidden-date {
-    text-align: right;
-    max-width: 180px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    padding: 8px 12px;
-    border-radius: 8px;
-  }
-  td select.status-btn { width: auto; padding: 8px 14px; }
+  td select.status-btn { width: auto; padding: 6px 12px; }
   
   .table-wrap {
     padding: 0;
