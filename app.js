@@ -467,7 +467,7 @@ async function syncToCloud(data) {
   const account = localStorage.getItem('syncAccount');
   const token = localStorage.getItem('syncToken');
   if(!account || !token) return;
-  showSync("同步至雲端...");
+  
   try {
     const payload = { action: 'sync', account: account, token: token, data: data };
     const res = await fetch(CLOUD_API_URL, {
@@ -478,11 +478,9 @@ async function syncToCloud(data) {
     if(json.error) {
       alert("同步失敗：" + json.error);
     }
-    hideSync();
   } catch(e) {
-    console.error(e);
-    alert("網路連線錯誤，無法同步");
-    hideSync();
+    console.error("syncToCloud error:", e);
+    // Silent fail on background sync to avoid interrupting user workflow
   }
 }
 

@@ -492,7 +492,7 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
 /* Sync Indicator */
 .sync-indicator {
   position: fixed;
-  top: 24px;
+  bottom: 24px;
   right: 24px;
   background: var(--panel);
   padding: 10px 20px;
@@ -502,14 +502,14 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   align-items: center;
   gap: 10px;
   z-index: 9000;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid var(--border-light);
   color: var(--text-main);
   font-weight: 600;
 }
 .sync-indicator.hidden {
   opacity: 0;
-  transform: translateY(-20px);
+  transform: translateY(20px);
   pointer-events: none;
 }
 .sync-spinner {
