@@ -609,6 +609,21 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   .mobile-menu-btn {
     display: block;
   }
+  .sync-indicator {
+    top: auto !important;
+    bottom: 24px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+  .sync-indicator.hidden {
+    transform: translate(-50%, 20px) !important;
+  }
+  
+  .search-wrap {
+    width: 100%;
+    min-width: 0;
+  }
   .top-actions {
     flex-wrap: wrap;
     width: 100%;
