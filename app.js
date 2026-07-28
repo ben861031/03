@@ -320,15 +320,25 @@ async function initApp() {
             localStorage.setItem('syncAccount', accInput);
             localStorage.setItem('syncToken', pwdInput);
             
-            const success = await loadDataAndRender();
-            if(success) {
+            // GAS 輕量優化：如果後台直接返回資料，省去第二趟 fetchFromCloud
+            if (json.data && Array.isArray(json.data)) {
+                let docs = normalizeDates(json.data);
+                docs.sort(sortDocs);
+                window.docsData = docs;
+                render();
                 document.getElementById('loginModal').classList.add('hidden');
                 document.getElementById('loginError').classList.add('hidden');
             } else {
-                document.getElementById('loginError').innerText = "無法載入資料，請重試";
-                document.getElementById('loginError').classList.remove('hidden');
-                localStorage.removeItem('syncToken');
-                localStorage.removeItem('syncAccount');
+                const success = await loadDataAndRender();
+                if(success) {
+                    document.getElementById('loginModal').classList.add('hidden');
+                    document.getElementById('loginError').classList.add('hidden');
+                } else {
+                    document.getElementById('loginError').innerText = "無法載入資料，請重試";
+                    document.getElementById('loginError').classList.remove('hidden');
+                    localStorage.removeItem('syncToken');
+                    localStorage.removeItem('syncAccount');
+                }
             }
         } catch(e) {
             document.getElementById('loginError').innerText = "網路連線錯誤";
