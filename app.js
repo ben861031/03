@@ -186,6 +186,7 @@ style="padding:10px;border-radius:10px;border:1px solid #ccc;min-width:280px;">
 <div 
 id="importText"
 contenteditable="true"
+data-placeholder="💡 請貼入從「電子表單 → 待審表單 → 總發」項下的所有公文資料"
 style="
 width:100%;
 height:320px;
