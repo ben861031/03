@@ -305,7 +305,7 @@ text-decoration:underline;
 }
 
 .modal{animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);display:none;position:fixed;inset:0;background:rgba(15,23,42,0.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);justify-content:center;align-items:center;z-index:99999}
-.modal-box{animation: modalBoxSlideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;background:white;width:900px;max-width:95%;padding:32px;border-radius:24px;box-shadow:0 20px 40px rgba(0,0,0,0.1)}
+.modal-box{animation: modalBoxSlideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;background:white;width:900px;max-width:95%;max-height:90vh;overflow-y:auto;padding:32px;border-radius:24px;box-shadow:0 20px 40px rgba(0,0,0,0.1)}
 .modal-box h2{font-size:24px;font-weight:700;margin-bottom:16px}
 .preview-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0}
 .preview-stat{padding:16px;border:1px solid var(--border-light);border-radius:16px;background:#f8fafc;box-shadow:0 2px 4px rgba(0,0,0,0.02)}

@@ -264,7 +264,8 @@ white-space:pre-wrap;
 <div class="modal" id="statsModal">
 <div class="modal-box" style="width:720px; max-width:95%;">
 <h2 style="margin-bottom:8px; display:flex; align-items:center; gap:8px;">
-📊 公文發送統計
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;color:#3b82f6;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+公文發送統計
 </h2>
 <p id="statsSubtitle" style="color:#64748b; margin-bottom:20px; font-size:14px;"></p>
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
