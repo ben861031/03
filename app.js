@@ -942,7 +942,8 @@ for(let i=0;i<lines.length;i++){
 if(/^[A-Z0-9]+$/.test(lines[i])){
 
 const projectNo = lines[i];
-const docNo = (lines[i+2] || '').replace(/[^\d]/g,'');
+const rawDocNo = lines[i+2] || '';
+const docNo = rawDocNo.replace(/[^\d]/g,'');
 
 let subject='';
 let handler='';
@@ -966,7 +967,8 @@ break;
 
 }
 
-if(docNo && subject){
+// 嚴格過濾：必須有數字與主旨、原本沒有橫槓，且萃取出的數字剛好 10 碼 (排除表單)
+if(docNo && subject && !rawDocNo.includes('-') && docNo.length === 10){
 
 if(seenDocNos.has(docNo)){
 continue;
