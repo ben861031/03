@@ -104,7 +104,13 @@ const AppTemplate = `
 </svg>
 批次刪除
 </button>
-<span id="excelExportArea" style="display:none;">
+<span id="excelExportArea" style="display:none; gap: 8px;">
+<button class="btn blue-soft" onclick="openStatsModal()" style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe;">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line>
+</svg>
+公文統計
+</button>
 <button class="btn excel-export" onclick="exportDoneExcel()">
 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path>
@@ -149,13 +155,18 @@ style="padding:10px;border-radius:10px;border:1px solid #ccc;min-width:280px;">
 <option value="internal">連結：公司內</option>
 <option value="external">連結：公司外</option>
 </select>
-<span id="doneFilterArea" style="display:none;">
-<input type="date" id="doneStartDate">
-<span>~</span>
-<input type="date" id="doneEndDate">
-<button class="btn blue" onclick="render()">
-查詢
-</button>
+<span id="doneFilterArea" style="display:none; align-items:center; gap:8px;">
+<button class="btn blue quick-date" data-range="all" onclick="setQuickDate('all')">全部</button>
+<button class="btn muted-btn quick-date" data-range="today" onclick="setQuickDate('today')">今天</button>
+<button class="btn muted-btn quick-date" data-range="week" onclick="setQuickDate('week')">本週</button>
+<button class="btn muted-btn quick-date" data-range="month" onclick="setQuickDate('month')">本月</button>
+<span style="color:#cbd5e1; margin:0 4px;">|</span>
+<span style="display:inline-flex; align-items:center; gap:4px;">
+<span style="color:#64748b; font-size:14px; margin-right:4px;">📅 自訂區間</span>
+<input type="date" id="doneStartDate" style="padding:6px 10px; border:1px solid #e2e8f0; border-radius:8px; color:#64748b; background:white;" onchange="clearQuickDateHighlight(); render()">
+<span style="color:#94a3b8; font-weight:bold;">~</span>
+<input type="date" id="doneEndDate" style="padding:6px 10px; border:1px solid #e2e8f0; border-radius:8px; color:#64748b; background:white;" onchange="clearQuickDateHighlight(); render()">
+</span>
 </span>
 </div>
 <div class="table-scroll">
@@ -245,6 +256,23 @@ white-space:pre-wrap;
 選擇日期
 </button>
 <button class="btn red" onclick="closeDateQuickModal()">取消</button>
+</div>
+</div>
+</div>
+<div class="modal" id="statsModal">
+<div class="modal-box" style="width:720px; max-width:95%;">
+<h2 style="margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+📊 公文發送統計
+</h2>
+<p id="statsSubtitle" style="color:#64748b; margin-bottom:20px; font-size:14px;"></p>
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <button class="btn secondary" onclick="changeStatsMonth(-1)">◀ 上個月</button>
+    <h3 id="statsMonthLabel" style="margin:0; color:var(--text-main, #334155);"></h3>
+    <button class="btn secondary" onclick="changeStatsMonth(1)">下個月 ▶</button>
+</div>
+<div id="calendarGrid" class="calendar-grid"></div>
+<div style="margin-top:20px; display:flex; justify-content:flex-end;">
+<button class="btn secondary" onclick="closeStatsModal()">關閉</button>
 </div>
 </div>
 </div>
@@ -807,6 +835,58 @@ search.focus();
 function getCheckedIndexes(){
 return [...document.querySelectorAll('.batch-check:checked')]
 .map(check=>Number(check.dataset.index));
+}
+
+function setQuickDate(range) {
+    const startInput = document.getElementById('doneStartDate');
+    const endInput = document.getElementById('doneEndDate');
+    const today = new Date();
+    
+    const formatDate = (date) => {
+        return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+    };
+
+    if (range === 'all') {
+        startInput.value = '';
+        endInput.value = '';
+    } else if (range === 'today') {
+        const d = formatDate(today);
+        startInput.value = d;
+        endInput.value = d;
+    } else if (range === 'week') {
+        const start = new Date(today);
+        const day = start.getDay();
+        const diff = start.getDate() - day + (day === 0 ? -6 : 1); 
+        start.setDate(diff);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        startInput.value = formatDate(start);
+        endInput.value = formatDate(end);
+    } else if (range === 'month') {
+        const start = new Date(today.getFullYear(), today.getMonth(), 1);
+        const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        startInput.value = formatDate(start);
+        endInput.value = formatDate(end);
+    }
+    
+    document.querySelectorAll('.quick-date').forEach(btn => {
+        btn.classList.remove('blue');
+        btn.classList.add('muted-btn');
+    });
+    const clickedBtn = document.querySelector(`.quick-date[data-range="${range}"]`);
+    if(clickedBtn) {
+        clickedBtn.classList.remove('muted-btn');
+        clickedBtn.classList.add('blue');
+    }
+
+    render();
+}
+
+function clearQuickDateHighlight() {
+    document.querySelectorAll('.quick-date').forEach(btn => {
+        btn.classList.remove('blue');
+        btn.classList.add('muted-btn');
+    });
 }
 
 function setFilter(type,el){
@@ -1642,6 +1722,101 @@ document.getElementById('dateQuickModal').style.display = 'flex';
 
 function closeDateQuickModal(){
 document.getElementById('dateQuickModal').style.display='none';
+}
+
+let statsCurrentDate = new Date();
+
+function openStatsModal() {
+    statsCurrentDate = new Date();
+    document.getElementById('statsModal').style.display = 'flex';
+    renderStatsCalendar();
+}
+
+function closeStatsModal() {
+    document.getElementById('statsModal').style.display = 'none';
+}
+
+function changeStatsMonth(delta) {
+    statsCurrentDate.setMonth(statsCurrentDate.getMonth() + delta);
+    renderStatsCalendar();
+}
+
+function renderStatsCalendar() {
+    const year = statsCurrentDate.getFullYear();
+    const month = statsCurrentDate.getMonth();
+    
+    document.getElementById('statsMonthLabel').innerText = `${year} 年 ${month + 1} 月`;
+    
+    // 計算這個月有幾筆發文
+    const monthStart = new Date(year, month, 1).getTime();
+    const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999).getTime();
+    
+    const doneDocs = docs.filter(d => d.status === '已發文' && d.doneTimestamp >= monthStart && d.doneTimestamp <= monthEnd);
+    document.getElementById('statsSubtitle').innerText = `本月累計發文：${doneDocs.length} 件`;
+    
+    // 計算每一天的數量
+    const dailyCounts = {};
+    doneDocs.forEach(d => {
+        const dObj = new Date(d.doneTimestamp);
+        const dayKey = dObj.getDate();
+        dailyCounts[dayKey] = (dailyCounts[dayKey] || 0) + 1;
+    });
+    
+    const grid = document.getElementById('calendarGrid');
+    grid.innerHTML = '';
+    
+    // 星期表頭
+    const days = ['日', '一', '二', '三', '四', '五', '六'];
+    days.forEach(d => {
+        const div = document.createElement('div');
+        div.className = 'calendar-header';
+        div.innerText = d;
+        grid.appendChild(div);
+    });
+    
+    // 空白格子
+    const firstDay = new Date(year, month, 1).getDay();
+    for (let i = 0; i < firstDay; i++) {
+        const div = document.createElement('div');
+        div.className = 'calendar-cell empty';
+        grid.appendChild(div);
+    }
+    
+    // 每一天的格子
+    const lastDate = new Date(year, month + 1, 0).getDate();
+    const today = new Date();
+    const isThisMonth = today.getFullYear() === year && today.getMonth() === month;
+    const todayDate = today.getDate();
+
+    for (let i = 1; i <= lastDate; i++) {
+        const div = document.createElement('div');
+        div.className = 'calendar-cell';
+        if (isThisMonth && i === todayDate) {
+            div.classList.add('today');
+        }
+        
+        const count = dailyCounts[i] || 0;
+        
+        let html = `<div class="date-num">${i}</div>`;
+        if (count > 0) {
+            html += `<div class="doc-badge">${count} 件</div>`;
+            div.classList.add('has-data');
+            div.onclick = () => {
+                // 點擊事件：跳轉到那一天
+                closeStatsModal();
+                const padMonth = String(month + 1).padStart(2, '0');
+                const padDay = String(i).padStart(2, '0');
+                const dateStr = `${year}-${padMonth}-${padDay}`;
+                document.getElementById('doneStartDate').value = dateStr;
+                document.getElementById('doneEndDate').value = dateStr;
+                clearQuickDateHighlight();
+                render();
+            };
+        }
+        
+        div.innerHTML = html;
+        grid.appendChild(div);
+    }
 }
 
 function applyCustomDate(){
