@@ -161,12 +161,14 @@ style="padding:10px;border-radius:10px;border:1px solid #ccc;min-width:280px;">
 <button class="btn muted-btn quick-date" data-range="week" onclick="setQuickDate('week')">本週</button>
 <button class="btn muted-btn quick-date" data-range="month" onclick="setQuickDate('month')">本月</button>
 <span style="color:#cbd5e1; margin:0 4px;">|</span>
-<span style="display:inline-flex; align-items:center; gap:4px;">
-<span style="color:#64748b; font-size:14px; margin-right:4px;">📅 自訂區間</span>
-<input type="date" id="doneStartDate" style="padding:6px 10px; border:1px solid #e2e8f0; border-radius:8px; color:#64748b; background:white;" onchange="clearQuickDateHighlight(); render()">
-<span style="color:#94a3b8; font-weight:bold;">~</span>
-<input type="date" id="doneEndDate" style="padding:6px 10px; border:1px solid #e2e8f0; border-radius:8px; color:#64748b; background:white;" onchange="clearQuickDateHighlight(); render()">
-</span>
+<button class="btn muted-btn quick-date" data-range="custom" onclick="openCustomDateModal()">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;margin-bottom:-3px;">
+<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path>
+</svg>
+自訂區間
+</button>
+<input type="date" id="doneStartDate" style="display:none;">
+<input type="date" id="doneEndDate" style="display:none;">
 </span>
 </div>
 <div class="table-scroll">
@@ -273,6 +275,21 @@ white-space:pre-wrap;
 <div id="calendarGrid" class="calendar-grid"></div>
 <div style="margin-top:20px; display:flex; justify-content:flex-end;">
 <button class="btn secondary" onclick="closeStatsModal()">關閉</button>
+</div>
+</div>
+</div>
+<div class="modal" id="customDateModal">
+<div class="modal-box" style="width:380px; max-width:95%;">
+<h3 style="margin-bottom:15px;">自訂篩選區間</h3>
+<div style="display:flex;flex-direction:column;gap:8px;">
+<label style="font-size:14px; color:var(--text-muted, #64748b);">起始日期</label>
+<input type="date" id="modalStartDateInput" style="padding:10px;border:1px solid #ccc;border-radius:8px;">
+<label style="font-size:14px; color:var(--text-muted, #64748b); margin-top:8px;">結束日期</label>
+<input type="date" id="modalEndDateInput" style="padding:10px;border:1px solid #ccc;border-radius:8px;">
+<button class="btn blue" style="margin-top:12px;" onclick="applyCustomDateFilter()">
+套用篩選
+</button>
+<button class="btn red" onclick="closeCustomDateModal()">取消</button>
 </div>
 </div>
 </div>
@@ -1817,6 +1834,35 @@ function renderStatsCalendar() {
         div.innerHTML = html;
         grid.appendChild(div);
     }
+}
+
+function openCustomDateModal() {
+    document.getElementById('modalStartDateInput').value = document.getElementById('doneStartDate').value;
+    document.getElementById('modalEndDateInput').value = document.getElementById('doneEndDate').value;
+    document.getElementById('customDateModal').style.display = 'flex';
+}
+
+function closeCustomDateModal() {
+    document.getElementById('customDateModal').style.display = 'none';
+}
+
+function applyCustomDateFilter() {
+    document.getElementById('doneStartDate').value = document.getElementById('modalStartDateInput').value;
+    document.getElementById('doneEndDate').value = document.getElementById('modalEndDateInput').value;
+    
+    // Highlight the custom button, remove highlight from others
+    document.querySelectorAll('.quick-date').forEach(btn => {
+        btn.classList.remove('blue');
+        btn.classList.add('muted-btn');
+    });
+    const clickedBtn = document.querySelector(`.quick-date[data-range="custom"]`);
+    if(clickedBtn) {
+        clickedBtn.classList.remove('muted-btn');
+        clickedBtn.classList.add('blue');
+    }
+    
+    closeCustomDateModal();
+    render();
 }
 
 function applyCustomDate(){

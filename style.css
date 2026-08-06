@@ -218,8 +218,8 @@ pointer-events:auto;
 .blue{background:var(--primary);color:#fff}
 .red{background:#ef4444;color:#fff}
 .orange{background:#f59e0b;color:#fff}
-.excel-export{background:#059669;color:#fff;border-color:#059669}
-.excel-export:hover{background:#047857;border-color:#047857}
+.excel-export{background:white;color:#059669;border-color:#a7f3d0}
+.excel-export:hover{background:#ecfdf5;border-color:#10b981}
 .secondary{background:white;color:#475569;border-color:#cbd5e1}
 .secondary:hover{background:#f8fafc;border-color:#94a3b8}
 .review-link{background:white;color:#475569;border-color:#cbd5e1}
