@@ -279,16 +279,39 @@ async function initApp() {
     if (!token || !account) {
         document.getElementById('loginModal').classList.remove('hidden');
     } else {
-        const result = await loadDataAndRender();
-        if(result && result.success) {
-            document.getElementById('loginModal').classList.add('hidden');
+        const cached = localStorage.getItem('cachedDocs');
+        if (cached) {
+            try {
+                // Offline-First: 瞬間載入快取
+                docs = JSON.parse(cached);
+                normalizeDates(docs);
+                setupEvents();
+                initFiltersAndEvents();
+                render();
+                document.getElementById('loginModal').classList.add('hidden');
+                
+                // 偷偷在背景發送請求更新資料 (Silent Mode)
+                loadDataAndRender(true);
+            } catch (e) {
+                console.error("Cache read error", e);
+                const result = await loadDataAndRender();
+                if(!result || !result.success) {
+                    document.getElementById('loginModal').classList.remove('hidden');
+                }
+            }
         } else {
-            if (result && result.reason === 'network') {
-                document.getElementById('app').innerHTML = `<div style="padding:40px;text-align:center;color:#64748b;font-size:16px;margin-top:20vh;">無法連接至雲端伺服器<br>請檢查網路狀態後再試<br><br><button class="btn primary" onclick="location.reload()">重新載入</button></div>`;
+            // 沒有快取，走原本的 Loading 流程
+            const result = await loadDataAndRender();
+            if(result && result.success) {
+                document.getElementById('loginModal').classList.add('hidden');
             } else {
-                document.getElementById('loginModal').classList.remove('hidden');
-                localStorage.removeItem('syncToken');
-                localStorage.removeItem('syncAccount');
+                if (result && result.reason === 'network') {
+                    document.getElementById('app').innerHTML = `<div style="padding:40px;text-align:center;color:#64748b;font-size:16px;margin-top:20vh;">無法連接至雲端伺服器<br>請檢查網路狀態後再試<br><br><button class="btn primary" onclick="location.reload()">重新載入</button></div>`;
+                } else {
+                    document.getElementById('loginModal').classList.remove('hidden');
+                    localStorage.removeItem('syncToken');
+                    localStorage.removeItem('syncAccount');
+                }
             }
         }
     }
@@ -322,6 +345,8 @@ async function initApp() {
             
             // GAS 輕量優化：如果後台直接返回資料，省去第二趟 fetchFromCloud
             if (json.data && Array.isArray(json.data)) {
+                // 登入成功時將資料寫入快取
+                localStorage.setItem('cachedDocs', JSON.stringify(json.data));
                 docs = json.data;
                 normalizeDates(docs);
                 setupEvents();
@@ -370,9 +395,11 @@ async function logout() {
 }
 
 
-async function loadDataAndRender() {
-    const result = await fetchFromCloud();
+async function loadDataAndRender(silent = false) {
+    const result = await fetchFromCloud(silent);
     if (result && result.success) {
+        // 更新快取
+        localStorage.setItem('cachedDocs', JSON.stringify(result.data));
         docs = result.data;
         normalizeDates(docs);
         setupEvents();
@@ -447,30 +474,35 @@ function hideSync() {
   if(ind) ind.classList.add('hidden');
 }
 
-async function fetchFromCloud() {
+async function fetchFromCloud(silent = false) {
   const account = localStorage.getItem('syncAccount');
   const token = localStorage.getItem('syncToken');
   if(!account || !token) return null;
   
   const fsLoader = document.getElementById('fullScreenLoader');
   const fsText = document.getElementById('fsLoaderText');
-  if (fsLoader) {
+  if (fsLoader && !silent) {
       fsText.innerText = "系統載入中...";
       fsLoader.classList.remove('hidden');
+  } else if (silent) {
+      showSync("背景同步中...");
   }
   
   try {
     const res = await fetch(CLOUD_API_URL + "?account=" + encodeURIComponent(account) + "&token=" + encodeURIComponent(token));
     const json = await res.json();
     if(json.error) {
-      if (fsLoader) fsLoader.classList.add('hidden');
+      if (fsLoader && !silent) fsLoader.classList.add('hidden');
+      if (silent) hideSync();
       return { success: false, reason: 'auth' };
     }
-    if (fsLoader) fsLoader.classList.add('hidden');
+    if (fsLoader && !silent) fsLoader.classList.add('hidden');
+    if (silent) hideSync();
     return { success: true, data: json };
   } catch(e) {
     console.error("fetchFromCloud network error:", e);
-    if (fsLoader) fsLoader.classList.add('hidden');
+    if (fsLoader && !silent) fsLoader.classList.add('hidden');
+    if (silent) hideSync();
     return { success: false, reason: 'network' };
   }
 }
