@@ -1074,17 +1074,25 @@ let lines = textContent.split('\n')
 .filter(v=>v && v!=='函');
 
 const importedDocNos = [];
-const parsedItems = [];
+let parsedItems = [];
 const seenDocNos = new Set();
 
-let currentSection = '總發'; // 預設狀態為「總發」，支援單純貼上無標題的資料
+if (pendingImportJSON) {
+    parsedItems = pendingImportJSON;
+    parsedItems.forEach(item => {
+        importedDocNos.push(item.docNo);
+        seenDocNos.add(item.docNo);
+    });
+    pendingImportJSON = null;
+} else {
+    let currentSection = '總發'; // 預設狀態為「總發」，支援單純貼上無標題的資料
 
-for(let i=0;i<lines.length;i++){
+    for(let i=0;i<lines.length;i++){
 
-// --- 區塊狀態追蹤 (Context-Aware) ---
-if (lines[i] === '總檔') {
-    currentSection = '其他';
-    continue;
+    // --- 區塊狀態追蹤 (Context-Aware) ---
+    if (lines[i] === '總檔') {
+        currentSection = '其他';
+        continue;
 } else if (lines[i] === '總發') {
     currentSection = '總發';
     continue;
@@ -1157,6 +1165,7 @@ sortOrder:order
 
 }
 
+}
 }
 
 if(importedDocNos.length===0){
@@ -2442,6 +2451,31 @@ async function pasteFromClipboard() {
 }
 
 initApp();
+
+let pendingImportJSON = null;
+
+// --- 接收來自書籤小工具的跨網域資料 (自動匯入功能) ---
+window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'AUTO_BATCH_IMPORT') {
+        const textData = event.data.payload;
+        if (event.data.json) {
+            pendingImportJSON = event.data.json;
+        } else {
+            pendingImportJSON = null;
+        }
+        
+        // 1. 開啟匯入視窗
+        document.getElementById('importModal').classList.remove('hidden');
+        
+        // 2. 填入資料 (使用 innerHTML 確保超連結不會遺失)
+        document.getElementById('importText').innerHTML = textData;
+        
+        // 3. 自動觸發「確認匯入」，稍微延遲讓畫面更新
+        setTimeout(() => {
+            confirmImport();
+        }, 100);
+    }
+});
 
 
 
