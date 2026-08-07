@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>發文時程管理平台</title>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app"></div>
+    <script>
+      window.onerror = function(msg, url, line) {
+        document.getElementById('app').innerHTML = '<div style="color:red;font-size:24px;padding:20px;">Error: ' + msg + '<br>Line: ' + line + '</div>';
+      };
+    </script>
+    <!-- Sync Indicator -->
+<div id="syncIndicator" class="sync-indicator hidden">
+  <div class="sync-spinner"></div>
+  <span id="syncText">同步中...</span>
+</div>
+
+<!-- Fullscreen Loader -->
+<div id="fullScreenLoader" class="fullscreen-loader hidden">
+  <div class="fs-spinner"></div>
+  <div id="fsLoaderText" class="fs-text">系統載入中...</div>
+</div>
+
+<!-- Login Screen -->
+<div id="loginModal" class="login-screen hidden">
+  <div class="login-box clean-style">
+    <div class="login-avatar">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"></path>
+      </svg>
+    </div>
+    <div class="login-title">發文時程管理平台</div>
+    <div class="login-divider"></div>
+    
+    <div class="login-input-group">
+      <input type="text" id="loginAccount" class="pill-input" placeholder="員工編號">
+      <input type="password" id="loginPassword" class="pill-input" placeholder="密碼">
+    </div>
+    
+    <div id="loginError" class="login-error hidden">帳號或密碼錯誤</div>
+    <button id="loginBtn" class="btn pill-btn">登入</button>
+  </div>
+</div>
+
+<script src="app-test.js"></script>
+</body>
+</html>
