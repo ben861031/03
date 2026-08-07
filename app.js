@@ -1068,9 +1068,35 @@ const importedDocNos = [];
 const parsedItems = [];
 const seenDocNos = new Set();
 
+let currentSection = '總發'; // 預設狀態為「總發」，支援單純貼上無標題的資料
+
 for(let i=0;i<lines.length;i++){
 
+// --- 區塊狀態追蹤 (Context-Aware) ---
+if (lines[i] === '總檔') {
+    currentSection = '其他';
+    continue;
+} else if (lines[i] === '總發') {
+    currentSection = '總發';
+    continue;
+} else if (/^\d{4}$/.test(lines[i])) {
+    // 若為 4 碼數字，判斷是「員編標題」還是「計畫編號」
+    // 若下一行是收創日期 (YYYY/MM/DD)，代表這行是剛好 4 碼的計畫編號
+    if (i + 1 < lines.length && /^\d{4}\/\d{2}\/\d{2}$/.test(lines[i+1])) {
+        // 這是計畫編號，不切換狀態，繼續往下執行
+    } else {
+        // 這是員編區塊標題
+        currentSection = '其他';
+        continue;
+    }
+}
+
 if(/^[A-Z0-9]+$/.test(lines[i])){
+
+    // 核心邏輯：只處理「總發」區塊內的資料
+    if (currentSection !== '總發') {
+        continue;
+    }
 
 const projectNo = lines[i];
 const rawDocNo = lines[i+2] || '';
