@@ -196,6 +196,7 @@ style="padding:10px;border-radius:10px;border:1px solid #ccc;min-width:280px;">
 <div class="modal" id="importModal">
 <div class="modal-box">
 <h2>智慧批次匯入</h2>
+<div style="position:relative; width:100%;">
 <div 
 id="importText"
 contenteditable="true"
@@ -210,6 +211,11 @@ overflow:auto;
 background:white;
 white-space:pre-wrap;
 "></div>
+<button class="btn secondary" onclick="pasteFromClipboard()" style="position:absolute; top:8px; right:16px; padding:6px 10px; font-size:13px; display:flex; align-items:center; gap:6px; background:white; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+快速貼上
+</button>
+</div>
 <div style="margin-top:14px;display:flex;gap:10px;">
 <button class="btn green" onclick="confirmImport()">確認匯入</button>
 <button class="btn blue" onclick="closeImport()">關閉</button>
@@ -1305,9 +1311,7 @@ String(today.getMinutes()).padStart(2,'0') +
 '.json';
 
 a.href = URL.createObjectURL(blob);
-
 a.download = fileName;
-
 a.click();
 
 }
@@ -2404,6 +2408,19 @@ currentFilter === 'done'
 
 
 
+}
+
+async function pasteFromClipboard() {
+    try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+            const editor = document.getElementById('importText');
+            editor.innerText = text;
+        }
+    } catch (err) {
+        alert('無法讀取剪貼簿，請確認瀏覽器已允許讀取剪貼簿權限，或直接使用 Ctrl+V 貼上。');
+        console.error('Failed to read clipboard contents: ', err);
+    }
 }
 
 initApp();
