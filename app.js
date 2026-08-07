@@ -1571,6 +1571,32 @@ warning.innerText=`⚠ 目前有 ${overdue} 件已逾期未發文`;
 warning.style.display='none';
 }
 
+// --- 瀑布式工作流自動跳轉 (Waterfall Auto-Routing) ---
+if (!search && rows.length === 0 && currentFilter !== 'done' && currentFilter !== 'forecast') {
+    let targetFilter = null;
+    let navId = null;
+    
+    if (currentFilter === 'nodate') {
+        if (overdue > 0) { targetFilter = 'overdue'; navId = 'navOverdue'; }
+        else if (todayCount > 0) { targetFilter = 'today'; navId = 'navToday'; }
+        else if (pending > 0) { targetFilter = 'pending'; navId = 'navPending'; }
+    } else if (currentFilter === 'overdue') {
+        if (todayCount > 0) { targetFilter = 'today'; navId = 'navToday'; }
+        else if (pending > 0) { targetFilter = 'pending'; navId = 'navPending'; }
+    } else if (currentFilter === 'today') {
+        if (pending > 0) { targetFilter = 'pending'; navId = 'navPending'; }
+    }
+
+    if (targetFilter && navId) {
+        const navEl = document.getElementById(navId);
+        if (navEl) {
+            setTimeout(() => setFilter(targetFilter, navEl), 10);
+            return;
+        }
+    }
+}
+// --------------------------------------
+
 renderForecast();
 
 const pageBar=document.getElementById('paginationBar');
