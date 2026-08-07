@@ -448,9 +448,18 @@ async function logout() {
 }
 
 
+let lastLocalEditTime = 0;
+
 async function loadDataAndRender(silent = false) {
+    const fetchStartTime = Date.now();
     const result = await fetchFromCloud(silent);
     if (result && result.success) {
+        // 如果在背景拉取資料的這段期間，使用者已經修改了本地資料，則捨棄伺服器的舊資料，避免覆蓋畫面
+        if (lastLocalEditTime > fetchStartTime) {
+            console.warn("偵測到本地資料已更新，捨棄伺服器回傳的舊資料以保護畫面狀態");
+            return { success: false, reason: 'conflict' };
+        }
+        
         // 更新快取
         localStorage.setItem('cachedDocs', JSON.stringify(result.data));
         docs = result.data;
@@ -808,7 +817,8 @@ function processToastQueue() {
 }
 
 function save(){
-syncToCloud(docs).catch(console.error);
+    lastLocalEditTime = Date.now();
+    syncToCloud(docs).catch(console.error);
 }
 
 function setLinkMode(value){
