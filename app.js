@@ -926,8 +926,10 @@ function clearQuickDateHighlight() {
     });
 }
 
-function setFilter(type,el){
+let isManualTabSwitch = false;
 
+function setFilter(type,el){
+isManualTabSwitch = true;
 currentFilter = type;
 selectedForecastDate = '';
 currentPage = 1;
@@ -1624,7 +1626,7 @@ warning.style.display='none';
 }
 
 // --- 瀑布式工作流自動跳轉 (Waterfall Auto-Routing) ---
-if (!search && rows.length === 0 && currentFilter !== 'done' && currentFilter !== 'forecast') {
+if (!isManualTabSwitch && !search && rows.length === 0 && currentFilter !== 'done' && currentFilter !== 'forecast') {
     let targetFilter = null;
     let navId = null;
     
@@ -1647,6 +1649,7 @@ if (!search && rows.length === 0 && currentFilter !== 'done' && currentFilter !=
         }
     }
 }
+isManualTabSwitch = false;
 // --------------------------------------
 
 renderForecast();
