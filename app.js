@@ -463,7 +463,10 @@ async function loadDataAndRender(silent = false) {
     return result;
 }
 
+let isEventsSetup = false;
 function setupEvents() {
+    if (isEventsSetup) return;
+    isEventsSetup = true;
     const tbody = document.getElementById('tbody');
     if(tbody) {
         tbody.addEventListener('click', e => {
@@ -2335,7 +2338,10 @@ w.print();
 
 }
 
+let isFiltersEventsSetup = false;
 function initFiltersAndEvents() {
+    if (isFiltersEventsSetup) return;
+    isFiltersEventsSetup = true;
 document.getElementById('search').addEventListener('input',()=>{
 currentPage=1;
 render();
