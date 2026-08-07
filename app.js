@@ -2412,10 +2412,22 @@ currentFilter === 'done'
 
 async function pasteFromClipboard() {
     try {
-        const text = await navigator.clipboard.readText();
-        if (text) {
-            const editor = document.getElementById('importText');
-            editor.innerText = text;
+        const clipboardItems = await navigator.clipboard.read();
+        let hasHtml = false;
+        
+        for (const clipboardItem of clipboardItems) {
+            if (clipboardItem.types.includes('text/html')) {
+                const blob = await clipboardItem.getType('text/html');
+                const html = await blob.text();
+                document.getElementById('importText').innerHTML = html;
+                hasHtml = true;
+                break;
+            }
+        }
+        
+        if (!hasHtml) {
+            const text = await navigator.clipboard.readText();
+            document.getElementById('importText').innerText = text;
         }
     } catch (err) {
         alert('無法讀取剪貼簿，請確認瀏覽器已允許讀取剪貼簿權限，或直接使用 Ctrl+V 貼上。');
