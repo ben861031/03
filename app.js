@@ -408,34 +408,31 @@ async function initApp() {
         document.getElementById('loginError').classList.add('hidden');
         
         try {
-            const { db, doc, getDoc } = window.firebaseAPI;
-            const userDoc = await getDoc(doc(db, "users", accInput));
+            const { auth, signInWithEmailAndPassword } = window.firebaseAPI;
             
-            if (userDoc.exists() && userDoc.data().password === pwdInput) {
-                // 登入成功
-                localStorage.setItem('syncAccount', accInput);
-                renderAppShell();
-                document.getElementById('loginModal').classList.add('hidden');
-                document.getElementById('loginBtn').innerText = "登入";
-                document.getElementById('loginPassword').value = '';
-                
-                // 顯示全螢幕載入動畫
-                const fsLoader = document.getElementById('fullScreenLoader');
-                if (fsLoader) {
-                    document.getElementById('fsLoaderText').innerText = "載入公文資料中...";
-                    fsLoader.classList.remove('hidden');
-                }
-                
-                initFirebaseSync();
-            } else {
-                // 帳號不存在或密碼錯誤
-                document.getElementById('loginError').innerText = "帳號或密碼錯誤";
-                document.getElementById('loginError').classList.remove('hidden');
-                document.getElementById('loginBtn').innerText = "登入";
+            // 將員工編號轉換為虛擬 Email 格式供 Firebase 認證使用
+            const virtualEmail = `${accInput}@sinotech.com`;
+            
+            await signInWithEmailAndPassword(auth, virtualEmail, pwdInput);
+            
+            // 登入成功
+            localStorage.setItem('syncAccount', accInput);
+            renderAppShell();
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('loginBtn').innerText = "登入";
+            document.getElementById('loginPassword').value = '';
+            
+            // 顯示全螢幕載入動畫
+            const fsLoader = document.getElementById('fullScreenLoader');
+            if (fsLoader) {
+                document.getElementById('fsLoaderText').innerText = "載入公文資料中...";
+                fsLoader.classList.remove('hidden');
             }
+            
+            initFirebaseSync();
         } catch (error) {
             console.error("Login verification error:", error);
-            document.getElementById('loginError').innerText = "驗證失敗，請檢查網路連線";
+            document.getElementById('loginError').innerText = "帳號不存在或密碼錯誤";
             document.getElementById('loginError').classList.remove('hidden');
             document.getElementById('loginBtn').innerText = "登入";
         }
