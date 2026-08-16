@@ -50,7 +50,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, getDocs, deleteDoc, writeBatch, query, where, orderBy, limit, startAfter, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -78,7 +78,13 @@ window.firebaseAPI = {
     onSnapshot,
     getDocs,
     deleteDoc,
-    writeBatch
+    writeBatch,
+    query,
+    where,
+    orderBy,
+    limit,
+    startAfter,
+    getCountFromServer
 };
 
 window.dispatchEvent(new Event('firebase-ready'));
