@@ -728,13 +728,14 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   td[data-label="表單編號"] {
     width: auto !important;
     flex: 1;
-    padding: 16px 16px 4px 4px;
+    padding: 16px 95px 4px 4px;
     border: none;
     font-weight: 800;
     font-size: 16px;
     color: var(--primary, #3b82f6);
     background: transparent;
     letter-spacing: 0.5px;
+    word-break: break-all;
   }
   td[data-label="表單編號"]::before {
     display: inline;
