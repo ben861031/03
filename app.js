@@ -936,12 +936,6 @@ currentFilter = type;
 selectedForecastDate = '';
 currentPage = 1;
 
-if (type === 'done') {
-    sortState = { key: 'doneTime', direction: 'desc' };
-} else {
-    sortState = { key: '', direction: 'asc' };
-}
-
 document.querySelectorAll('.nav').forEach(v=>v.classList.remove('active'));
 
 el.classList.add('active');
