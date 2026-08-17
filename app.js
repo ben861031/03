@@ -178,6 +178,7 @@ style="padding:10px;border-radius:10px;border:1px solid #ccc;min-width:280px;">
 <th><input type="checkbox" id="selectAllVisible" class="select-all" title="全選目前畫面" onchange="toggleSelectAllVisible(this.checked)"></th>
 <th><button class="sort-btn" onclick="setSort('docNo')">表單編號 <span class="sort-mark" data-sort-mark="docNo"></span></button></th>
 <th><button class="sort-btn" onclick="setSort('subject')">主旨 <span class="sort-mark" data-sort-mark="subject"></span></button></th>
+<th><button class="sort-btn" onclick="setSort('projectNo')">計畫編號 <span class="sort-mark" data-sort-mark="projectNo"></span></button></th>
 <th><button class="sort-btn" onclick="setSort('handler')">承辦人 <span class="sort-mark" data-sort-mark="handler"></span></button></th>
 <th><button class="sort-btn" onclick="setSort('sendDate')">發文日期 <span class="sort-mark" data-sort-mark="sendDate"></span></button></th>
 <th><button class="sort-btn" onclick="setSort('displayDate')">公文顯示日期 <span class="sort-mark" data-sort-mark="displayDate"></span></button></th>
@@ -1566,9 +1567,9 @@ paged.forEach((item)=>{
     const dispatchUrl = getDispatchDetailUrl(d.url);
     const safeUrl = escapeHTML(smartUrl);
     
-    const subjectContent = d.url 
+    let subjectContent = dispatchUrl 
         ? `<a class="subject-link" href="${safeUrl}" target="_blank" rel="noopener" title="${escapeHTML(getLinkModeLabel())}">${safeSubject}</a>` 
-        : safeSubject;
+        : `<div class="subject-link">${safeSubject}</div>`;
         
     tr.innerHTML = `
         <td data-label="選取">
@@ -1580,8 +1581,11 @@ paged.forEach((item)=>{
         <td data-label="主旨">
             ${subjectContent}
         </td>
+        <td data-label="計畫編號">
+            <span class="val">${d.projectNo || ''}</span>
+        </td>
         <td data-label="承辦人">
-            ${d.handler || ''}
+            <span class="val">${d.handler || ''}</span>
         </td>
 
         <td data-label="應發文日">
