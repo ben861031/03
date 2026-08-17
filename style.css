@@ -743,7 +743,7 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   td[data-label="表單編號"]::before {
     display: inline;
     content: "表單編號：";
-    color: #64748b;
+    color: #94a3b8;
     font-size: 13px;
     font-weight: 600;
     margin-right: 4px;
@@ -781,9 +781,6 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
     width: 50% !important;
     padding: 12px 20px 4px 20px;
     border: none;
-    color: #475569;
-    font-weight: 600;
-    font-size: 14px;
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
@@ -795,13 +792,13 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
     display: block;
     content: "計畫編號：";
     font-size: 12px;
-    color: #64748b;
+    color: #94a3b8;
   }
   td[data-label="承辦人"]::before {
     display: block;
     content: "承辦人：";
     font-size: 12px;
-    color: #64748b;
+    color: #94a3b8;
   }
   td[data-label="計畫編號"] span.val,
   td[data-label="承辦人"] span.val {
@@ -831,13 +828,13 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
     display: block;
     content: "發文日期：";
     font-size: 12px;
-    color: #64748b;
+    color: #94a3b8;
   }
   td[data-label="顯示發文"]::before {
     display: block;
     content: "公文顯示日期：";
     font-size: 12px;
-    color: #64748b;
+    color: #94a3b8;
   }
   
   td[data-label="應發文日"] .pill,
@@ -861,7 +858,7 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
     display: block;
     content: "✏️ 備註";
     font-size: 13px;
-    color: #64748b;
+    color: #94a3b8;
     margin-bottom: 8px;
     width: 100%;
   }
