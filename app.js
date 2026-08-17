@@ -1546,9 +1546,6 @@ const start=(currentPage-1)*pageSize;
 const end=start+pageSize;
 const paged=rows.slice(start,end);
 
-window.lastRenderedRowsCount = rows.length;
-window.lastRenderedFilter = currentFilter;
-
 paged.forEach((item)=>{
     const d = item.d;
     const i = item.i;
@@ -1635,7 +1632,11 @@ paged.forEach((item)=>{
 
     });
 
+if(rows.length===0){
+tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;">此分類目前無資料</td></tr>';
+}else{
 tbody.appendChild(fragment);
+}
 
 const selectAll=document.getElementById('selectAllVisible');
 const visibleChecks=[...document.querySelectorAll('.batch-check')];
@@ -2041,7 +2042,7 @@ showToast('發文日期已更新');
 
 }
 
-function quickDate(i,offset){
+function quickDate(docNo,offset){
 
 const d=new Date();
 d.setDate(d.getDate()+offset);
@@ -2051,29 +2052,33 @@ const mm=String(d.getMonth()+1).padStart(2,'0');
 const dd=String(d.getDate()).padStart(2,'0');
 const dateStr=`${yyyy}-${mm}-${dd}`;
 
+const doc = getDocByNo(docNo);
+if (!doc) return;
+
 if(activeDateMode === 'display'){
-docs[i].displayDate=dateStr;
+doc.displayDate=dateStr;
+updateDocInCloud(docNo, { displayDate: dateStr });
 }else{
-docs[i].sendDate=dateStr;
+doc.sendDate=dateStr;
 
-if(!docs[i].displayDate){
-docs[i].displayDate=docs[i].sendDate;
+if(!doc.displayDate){
+doc.displayDate=doc.sendDate;
+updateDocInCloud(docNo, { sendDate: dateStr, displayDate: dateStr });
+} else {
+updateDocInCloud(docNo, { sendDate: dateStr });
 }
 }
 
-const docData = docs[i];
-updateDocInCloud(docData.docNo, { 
-    sendDate: docData.sendDate, 
-    displayDate: docData.displayDate 
-});
 render();
 showToast(activeDateMode === 'display' ? '顯示日期已更新' : '發文日期已更新');
 }
 
 
-function updateDisplay(i,val){
-docs[i].displayDate=val;
-updateDocInCloud(docs[i].docNo, { displayDate: val });
+function updateDisplay(docNo,val){
+const doc = getDocByNo(docNo);
+if (!doc) return;
+doc.displayDate=val;
+updateDocInCloud(docNo, { displayDate: val });
 render();
 showToast('顯示日期已更新');
 }
