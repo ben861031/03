@@ -345,8 +345,8 @@ async function initFirebaseSync() {
     const activeQuery = query(collection(db, "docs"), where("status", "!=", "已發文"));
     
     onSnapshot(activeQuery, (snapshot) => {
-        // 防止初次空快取覆蓋
-        if (snapshot.metadata.fromCache && snapshot.empty && docs.length > 0) {
+        // 防止首次空快取提前解除載入畫面與導致重複匯入
+        if (snapshot.metadata.fromCache && snapshot.empty) {
             return;
         }
         
