@@ -1263,7 +1263,7 @@ const changedDocs = [];
 
 pendingImportPlan.parsedItems.forEach(item=>{
 
-const existingDoc=docs.find(d=>String(d.docNo)===String(item.docNo));
+const existingDoc=getDocByNo(item.docNo);
 
 if(existingDoc){
 existingDoc.sortOrder=item.sortOrder;
@@ -1414,11 +1414,9 @@ return;
 }
 
 saveBatchToCloud(imported).then(() => {
-    alert('備份匯入完成，將重新載入頁面');
+    alert('備份匯入完成，將重新載入畫面');
     window.location.reload();
 });
-
-alert('備份匯入完成');
 
 }catch(err){
     console.error("Import error:", err);
@@ -1860,7 +1858,7 @@ activeDateIndex = docNo;
 activeDateMode = mode;
 
 const title = document.getElementById('dateQuickModalTitle');
-const input = document.getElementById('quickDateInput');
+const input = document.getElementById('modalDateInput');
 
 if (title) {
 title.innerText = mode === 'display' ? '設定公文顯示日期' : '設定發文日期';
