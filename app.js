@@ -312,15 +312,40 @@ function toggleMobileMenu() {
 }
 
 let isFirstSync = true;
+let doneDocsCount = 0; // 儀表板使用的累計已發數量
+let doneDocs = [];     // 已載入的歷史公文
+let doneDocsLoadedAll = false; // 是否已載入所有歷史公文
+
 async function initFirebaseSync() {
     if (!window.firebaseAPI) {
         console.error("Firebase API not ready");
         return;
     }
-    const { db, collection, onSnapshot } = window.firebaseAPI;
+    const { db, collection, query, where, onSnapshot, getCountFromServer } = window.firebaseAPI;
     
-    onSnapshot(collection(db, "docs"), (snapshot) => {
-        // 防止 Firebase 在連線前用空的本地快取覆蓋我們自己的 localStorage 快取
+    // 1. 取得歷史公文總數 (極低 Reads，只需抓 Count)
+    try {
+        const doneQuery = query(collection(db, "docs"), where("status", "==", "已發文"));
+        const snapshot = await getCountFromServer(doneQuery);
+        doneDocsCount = snapshot.data().count;
+        
+        const countEl = document.getElementById('doneCount');
+        if (countEl) countEl.innerText = doneDocsCount;
+        
+        const badgeEl = document.getElementById('doneBadge');
+        if (badgeEl) badgeEl.innerText = doneDocsCount;
+        
+        // 如果已經拿到主資料，再強制更新一次畫面確保同步
+        if (docs.length > 0) render();
+    } catch(e) {
+        console.error("Error getting done count:", e);
+    }
+    
+    // 2. 只即時監聽活躍公文 (大幅減少 Reads)
+    const activeQuery = query(collection(db, "docs"), where("status", "!=", "已發文"));
+    
+    onSnapshot(activeQuery, (snapshot) => {
+        // 防止初次空快取覆蓋
         if (snapshot.metadata.fromCache && snapshot.empty && docs.length > 0) {
             return;
         }
@@ -331,7 +356,6 @@ async function initFirebaseSync() {
         });
         
         docs = loadedDocs;
-        localStorage.setItem('cachedDocs', JSON.stringify(docs));
         normalizeDates(docs);
         
         if (isFirstSync) {
@@ -373,24 +397,14 @@ async function initApp() {
         document.getElementById('loginModal').classList.remove('hidden');
     } else {
         renderAppShell();
-        const cached = localStorage.getItem('cachedDocs');
-        if (cached) {
-            try {
-                docs = JSON.parse(cached);
-                normalizeDates(docs);
-                setupEvents();
-                initFiltersAndEvents();
-                isFirstSync = false;
-                render();
-            } catch(e) { console.error("Cache read error", e); }
-        } else {
-            // 沒有快取，顯示載入動畫
-            const fsLoader = document.getElementById('fullScreenLoader');
-            if (fsLoader) {
-                document.getElementById('fsLoaderText').innerText = "載入公文資料中...";
-                fsLoader.classList.remove('hidden');
-            }
+        
+        // 沒有快取，顯示載入動畫
+        const fsLoader = document.getElementById('fullScreenLoader');
+        if (fsLoader) {
+            document.getElementById('fsLoaderText').innerText = "載入公文資料中...";
+            fsLoader.classList.remove('hidden');
         }
+        
         initFirebaseSync();
     }
     
@@ -533,33 +547,33 @@ function setupEvents() {
             const btn = e.target.closest('[data-action]');
             if (!btn || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
             const action = btn.dataset.action;
-            const index = Number(btn.dataset.index);
+            const docNo = btn.dataset.docno;
             
-            if (action === 'openDateQuickModal') openDateQuickModal(index);
-            else if (action === 'openDateQuickModalDisplay') openDateQuickModal(index, 'display');
-            else if (action === 'openCompare') openCompare(index);
-            else if (action === 'deleteDoc') deleteDoc(index);
+            if (action === 'openDateQuickModal') openDateQuickModal(docNo);
+            else if (action === 'openDateQuickModalDisplay') openDateQuickModal(docNo, 'display');
+            else if (action === 'openCompare') openCompare(docNo);
+            else if (action === 'deleteDoc') deleteDoc(docNo);
             else if (action === 'setFilter') setFilter(btn.dataset.filter, btn);
         });
 
         tbody.addEventListener('change', e => {
             if (!e.target.dataset.action) return;
             const action = e.target.dataset.action;
-            const index = Number(e.target.dataset.index);
+            const docNo = e.target.dataset.docno;
             const val = e.target.value;
             
-            if (action === 'updateSend') updateSend(index, val);
-            else if (action === 'updateDisplay') updateDisplay(index, val);
-            else if (action === 'changeStatus') changeStatus(index, val);
+            if (action === 'updateSend') updateSend(docNo, val);
+            else if (action === 'updateDisplay') updateDisplay(docNo, val);
+            else if (action === 'changeStatus') changeStatus(docNo, val);
         });
 
         tbody.addEventListener('input', e => {
             if (!e.target.dataset.action) return;
             const action = e.target.dataset.action;
-            const index = Number(e.target.dataset.index);
+            const docNo = e.target.dataset.docno;
             const val = e.target.value;
             
-            if (action === 'updateNote') updateNote(index, val);
+            if (action === 'updateNote') updateNote(docNo, val);
         });
     }
     
@@ -818,8 +832,16 @@ function openMyReview(){
 window.open(getMyReviewUrl(),'_blank','noopener');
 }
 
-function openCompare(i){
-const doc=docs[i];
+function getDocByNo(docNo) {
+    return docs.find(d => String(d.docNo) === String(docNo)) || doneDocs.find(d => String(d.docNo) === String(docNo));
+}
+
+function openCompare(docNo){
+const doc=getDocByNo(docNo);
+if(!doc){
+alert('找不到資料。');
+return;
+}
 const signUrl=getSignEditUrl(doc.url);
 const dispatchUrl=getDispatchDetailUrl(doc.url);
 
@@ -851,9 +873,9 @@ render();
 search.focus();
 }
 
-function getCheckedIndexes(){
+function getCheckedDocNos(){
 return [...document.querySelectorAll('.batch-check:checked')]
-.map(check=>Number(check.dataset.index));
+.map(check=>check.dataset.docno);
 }
 
 function setQuickDate(range) {
@@ -908,11 +930,17 @@ function clearQuickDateHighlight() {
     });
 }
 
-function setFilter(type,el){
+async function setFilter(type,el){
 window.isManualNav = true;
 currentFilter = type;
 selectedForecastDate = '';
 currentPage = 1;
+
+if (type === 'done') {
+    sortState = { key: 'doneTime', direction: 'desc' };
+} else {
+    sortState = { key: '', direction: 'asc' };
+}
 
 document.querySelectorAll('.nav').forEach(v=>v.classList.remove('active'));
 
@@ -958,6 +986,15 @@ type === 'done'
 
 }
 
+if (type === 'done' && !doneDocsLoadedAll) {
+    const fsLoader = document.getElementById('fullScreenLoader');
+    if (fsLoader) {
+        document.getElementById('fsLoaderText').innerText = "載入歷史公文中...";
+        fsLoader.classList.remove('hidden');
+    }
+    await loadAllDoneDocs();
+    if (fsLoader) fsLoader.classList.add('hidden');
+}
 
 render();
 
@@ -1218,6 +1255,8 @@ alert('沒有可執行的同步內容。');
 return;
 }
 
+const changedDocs = [];
+
 pendingImportPlan.parsedItems.forEach(item=>{
 
 const existingDoc=docs.find(d=>String(d.docNo)===String(item.docNo));
@@ -1225,10 +1264,11 @@ const existingDoc=docs.find(d=>String(d.docNo)===String(item.docNo));
 if(existingDoc){
 existingDoc.sortOrder=item.sortOrder;
 if(item.url) existingDoc.url=item.url;
+changedDocs.push(existingDoc);
 return;
 }
 
-docs.push({
+const newDoc = {
 projectNo:item.projectNo,
 docNo:item.docNo,
 subject:item.subject,
@@ -1241,7 +1281,10 @@ doneTimestamp:0,
 note:'',
 url:item.url,
 sortOrder:item.sortOrder
-});
+};
+
+docs.push(newDoc);
+changedDocs.push(newDoc);
 
 });
 
@@ -1254,6 +1297,16 @@ const doneInfo=getDoneInfo();
 doc.status='已發文';
 doc.doneTimestamp=doneInfo.timestamp;
 doc.doneTime=doneInfo.display;
+
+// Move to doneDocs locally
+let idx = docs.indexOf(doc);
+if (idx > -1) docs.splice(idx, 1);
+if (!doneDocs.find(d => String(d.docNo) === String(doc.docNo))) {
+    doneDocs.push(doc);
+    doneDocsCount++;
+}
+
+changedDocs.push(doc);
 }
 
 });
@@ -1274,7 +1327,7 @@ document.getElementById('doneFilterArea').style.display='none';
 document.getElementById('excelExportArea').style.display='none';
 }
 
-saveBatchToCloud(docs);
+saveBatchToCloud(changedDocs);
 render();
 document.getElementById('importText').innerHTML = '';
 document.getElementById('importPreviewModal').style.display='none';
@@ -1292,9 +1345,20 @@ alert(
 
 
 
-function exportBackup(){
+async function exportBackup(){
 
-const dataStr = JSON.stringify(docs,null,2);
+if (!doneDocsLoadedAll) {
+    const fsLoader = document.getElementById('fullScreenLoader');
+    if (fsLoader) {
+        document.getElementById('fsLoaderText').innerText = "載入歷史資料中...";
+        fsLoader.classList.remove('hidden');
+    }
+    await loadAllDoneDocs();
+    if (fsLoader) fsLoader.classList.add('hidden');
+}
+
+const allData = [...docs, ...doneDocs];
+const dataStr = JSON.stringify(allData,null,2);
 
 const blob = new Blob([dataStr],{
 type:'application/json'
@@ -1345,10 +1409,10 @@ if(!confirm(`確定匯入 ${imported.length} 筆資料？\n目前資料將被覆
 return;
 }
 
-docs = imported;
-
-saveBatchToCloud(docs);
-render();
+saveBatchToCloud(imported).then(() => {
+    alert('備份匯入完成，將重新載入頁面');
+    window.location.reload();
+});
 
 alert('備份匯入完成');
 
@@ -1391,19 +1455,27 @@ document.getElementById('doneStartDate')?.value || '';
 const doneEndDate =
 document.getElementById('doneEndDate')?.value || '';
 
-let pending=0,nodateCount=0,todayCount=0,overdue=0,done=0;
+let pending=0,nodateCount=0,todayCount=0,overdue=0;
 
 docs.forEach(v=>{
 if(v.status!=='已發文') pending++;
 if(v.status!=='已發文' && !v.sendDate) nodateCount++;
 if(v.sendDate===todayFull && v.status!=='已發文') todayCount++;
 if(v.sendDate && v.sendDate<todayFull && v.status!=='已發文') overdue++;
-if(v.status==='已發文') done++;
 });
 
 let rows = [];
 
-docs.forEach((d,i)=>{
+let currentSourceData = docs;
+if (search) {
+    // If searching, combine both active and historical docs for full search
+    currentSourceData = [...docs, ...doneDocs];
+} else if (currentFilter === 'done') {
+    // If viewing history, only look at done docs
+    currentSourceData = doneDocs;
+}
+
+currentSourceData.forEach((d,i)=>{
 
 const text = normalizeText(`${d.docNo} ${d.subject} ${d.handler} ${d.note || ''}`);
 
@@ -1455,121 +1527,99 @@ return ((a.d.doneTimestamp || 0) - (b.d.doneTimestamp || 0)) * direction;
 
 const av=normalizeText(a.d[sortState.key] || '');
 const bv=normalizeText(b.d[sortState.key] || '');
-
-if(sortState.key==='docNo'){
-return (Number(a.d.docNo || 0) - Number(b.d.docNo || 0)) * direction;
-}
-
 return av.localeCompare(bv,'zh-Hant') * direction;
 });
-}else if(currentFilter==='done'){
-rows.sort((a,b)=>
-(b.d.doneTimestamp || 0)
--
-(a.d.doneTimestamp || 0)
-);
-}else{
-rows.sort((a,b)=>(a.d.sortOrder||999999)-(b.d.sortOrder||999999));
-}
-
-const totalRows = rows.length;
-
-if(currentFilter==='done'){
-const start=(currentPage-1)*pageSize;
-rows=rows.slice(start,start+pageSize);
-}else{
-currentPage=1;
-}
-
-if (rows.length === 0) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-        <td colspan="${isDonePage ? '10' : '9'}" style="text-align: center; padding: 60px 0; color: #94a3b8; font-size: 15px; background: transparent; border: none;">
-            <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;opacity:0.4;">
-                    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
-                    <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
-                </svg>
-                <div style="font-weight: 500;">
-                    ${search ? '找不到符合搜尋條件的公文' : '目前尚無公文資料'}
-                </div>
-            </div>
-        </td>
-    `;
-    fragment.appendChild(tr);
 } else {
-    rows.forEach(({d,i})=>{
+    if (currentFilter === 'done') {
+        rows.sort((a, b) => (b.d.doneTimestamp || 0) - (a.d.doneTimestamp || 0));
+    } else {
+        rows.sort((a, b) => (a.d.sortOrder || 999999) - (b.d.sortOrder || 999999));
+    }
+}
 
-        const tr = document.createElement('tr');
-        const safeDocNo=escapeHTML(d.docNo);
-        const safeSubject=escapeHTML(d.subject);
-        const safeHandler=escapeHTML(d.handler);
-        const smartUrl=getSignEditUrl(d.url);
-        const dispatchUrl=getDispatchDetailUrl(d.url);
-        const safeUrl=escapeHTML(smartUrl);
-        const safeNote=escapeHTML(d.note || '');
-        const safeDoneTime=escapeHTML(d.doneTime || '');
 
-        if(d.status==='已發文'){
-            tr.classList.add('done-row');
-        }
+const start=(currentPage-1)*pageSize;
+const end=start+pageSize;
+const paged=rows.slice(start,end);
 
-        if(d.sendDate && d.sendDate<todayFull && d.status!=='已發文'){
-            tr.classList.add('overdue-row');
-        }
+window.lastRenderedRowsCount = rows.length;
+window.lastRenderedFilter = currentFilter;
 
-        if(d.sendDate && d.displayDate && d.sendDate!==d.displayDate){
-            tr.classList.add('date-diff-row');
-        }
+paged.forEach((item)=>{
+    const d = item.d;
+    const i = item.i;
 
-        tr.innerHTML = `
-        <td data-label="選擇"><input type="checkbox" class="batch-check" data-index="${i}"></td>
-
-        <td data-label="表單編號">${safeDocNo}</td>
-
+    const isOverdue = d.sendDate && d.sendDate < todayFull && d.status!=='已發文';
+    const isToday = d.sendDate === todayFull && d.status!=='已發文';
+    
+    let rowClass = '';
+    if(isOverdue) rowClass='overdue-row';
+    else if(isToday) rowClass='today-row';
+    
+    const safeSubject = escapeHTML(d.subject);
+    const safeNote = escapeHTML(d.note || '');
+    const safeDoneTime = d.doneTime ? escapeHTML(d.doneTime) : '';
+    
+    const tr = document.createElement('tr');
+    tr.className = rowClass;
+    
+    const smartUrl = getSignEditUrl(d.url);
+    const dispatchUrl = getDispatchDetailUrl(d.url);
+    const safeUrl = escapeHTML(smartUrl);
+    
+    const subjectContent = d.url 
+        ? `<a class="subject-link" href="${safeUrl}" target="_blank" rel="noopener" title="${escapeHTML(getLinkModeLabel())}">${safeSubject}</a>` 
+        : safeSubject;
+        
+    tr.innerHTML = `
+        <td data-label="選取">
+            <input type="checkbox" class="batch-check" data-docno="${d.docNo}">
+        </td>
+        <td data-label="表單編號">
+            <div class="doc-no" onclick="copyToClipboard('${d.docNo}')" title="點擊複製表單編號">${d.docNo}</div>
+        </td>
         <td data-label="主旨">
-        ${d.url ? 
-        `<a class="subject-link" href="${safeUrl}" target="_blank" rel="noopener" title="${escapeHTML(getLinkModeLabel())}">${safeSubject}</a>` 
-        : safeSubject}
+            ${subjectContent}
+        </td>
+        <td data-label="承辦人">
+            ${d.handler || ''}
         </td>
 
-        <td data-label="承辦人">${safeHandler}</td>
-
-        <td data-label="預定發文">
-        <div class="pill send-pill" data-action="openDateQuickModal" data-index="${i}">
-        ${d.sendDate ? d.sendDate.replace(/^\d{4}-/,'').replace('-','/') : '未設定'}
+        <td data-label="應發文日">
+        <div class="pill send-pill" data-action="openDateQuickModal" data-docno="${d.docNo}">
+        ${d.sendDate ? d.sendDate.replace(/^\d{4}-/,'').replace('-','/') : '未設'}
         </div>
-        <input id="send_${i}" class="hidden-date" type="date" value="${d.sendDate}" data-action="updateSend" data-index="${i}">
+        <input id="send_${d.docNo}" class="hidden-date" type="date" value="${d.sendDate}" data-action="updateSend" data-docno="${d.docNo}">
         </td>
 
         <td data-label="顯示發文">
-        <div class="pill display-pill" data-action="openDateQuickModalDisplay" data-index="${i}">
-        ${d.displayDate ? d.displayDate.replace(/^\d{4}-/,'').replace('-','/') : '未設定'}
+        <div class="pill display-pill" data-action="openDateQuickModalDisplay" data-docno="${d.docNo}">
+        ${d.displayDate ? d.displayDate.replace(/^\d{4}-/,'').replace('-','/') : '未設'}
         </div>
-        <input id="display_${i}" class="hidden-date" type="date" value="${d.displayDate}" data-action="updateDisplay" data-index="${i}">
+        <input id="display_${d.docNo}" class="hidden-date" type="date" value="${d.displayDate}" data-action="updateDisplay" data-docno="${d.docNo}">
         </td>
 
         <td data-label="狀態">
         <select 
         class="status-btn ${d.status==='已發文'?'done':'pending'}"
-        data-action="changeStatus" data-index="${i}">
+        data-action="changeStatus" data-docno="${d.docNo}">
         <option value="待發" ${d.status==='待發'?'selected':''}>待發</option>
         <option value="已發文" ${d.status==='已發文'?'selected':''}>已發文</option>
         </select>
         </td>
 
         <td data-label="備註">
-        <input class="note" value="${safeNote}" title="${safeNote}" data-action="updateNote" data-index="${i}" placeholder="輸入備註">
+        <input class="note" value="${safeNote}" title="${safeNote}" data-action="updateNote" data-docno="${d.docNo}" placeholder="輸入備註">
         </td>
 
         ${isDonePage ? `<td data-label="完成時間" class="done-cell">${safeDoneTime}</td>` : ``}
         <td data-label="操作">
-        ${dispatchUrl ? `<button class="btn secondary" style="padding:6px 10px;min-height:34px;margin-right:4px;" data-action="openCompare" data-index="${i}" title="同時開啟發文作業與電子表單">
+        ${dispatchUrl ? `<button class="btn secondary" style="padding:6px 10px;min-height:34px;margin-right:4px;" data-action="openCompare" data-docno="${d.docNo}" title="同時開啟發文作業與電子表單">
         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="3" y="4" width="7" height="16" rx="1"></rect><rect x="14" y="4" width="7" height="16" rx="1"></rect>
         </svg>
         </button>` : ``}
-        <button class="btn danger-soft" style="padding:6px 10px;min-height:34px;" data-action="deleteDoc" data-index="${i}" title="刪除">
+        <button class="btn danger-soft" style="padding:6px 10px;min-height:34px;" data-action="deleteDoc" data-docno="${d.docNo}" title="刪除">
         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="m6 7 1 14h10l1-14"></path>
         </svg>
@@ -1580,7 +1630,7 @@ if (rows.length === 0) {
         fragment.appendChild(tr);
 
     });
-}
+
 tbody.appendChild(fragment);
 
 const selectAll=document.getElementById('selectAllVisible');
@@ -1604,12 +1654,12 @@ document.getElementById('pendingBadge').innerText=pending;
 document.getElementById('nodateBadge').innerText=nodateCount;
 document.getElementById('todayBadge').innerText=todayCount;
 document.getElementById('overdueBadge').innerText=overdue;
-document.getElementById('doneBadge').innerText=done;
+document.getElementById('doneBadge').innerText=doneDocsCount;
 
 document.getElementById('pendingCount').innerText=pending;
 document.getElementById('todayCount').innerText=todayCount;
 document.getElementById('overdueCount').innerText=overdue;
-document.getElementById('doneCount').innerText=done;
+document.getElementById('doneCount').innerText=doneDocsCount;
 
 
 
@@ -1657,14 +1707,14 @@ pageBar.innerHTML='';
 
 if(currentFilter==='done'){
 
-const totalPages=Math.ceil(totalRows/pageSize)||1;
+const totalPages=Math.ceil(rows.length/pageSize)||1;
 
 const pagination=document.createElement('div');
 pagination.className='pagination';
 
 const info=document.createElement('div');
 info.className='pagination-info';
-info.textContent=`共 ${totalRows} 筆資料　第 ${currentPage} / ${totalPages} 頁`;
+info.textContent=`共 ${rows.length} 筆資料　第 ${currentPage} / ${totalPages} 頁`;
 pagination.appendChild(info);
 
 const prev=document.createElement('button');
@@ -1800,19 +1850,20 @@ box.appendChild(div);
 let activeDateIndex=null;
 let activeDateMode='send';
 
-function openDateQuickModal(i, mode='send') {
-activeDateIndex = i;
+function openDateQuickModal(docNo, mode='send') {
+activeDateIndex = docNo;
 activeDateMode = mode;
 
 const title = document.getElementById('dateQuickModalTitle');
-const input = document.getElementById('modalDateInput');
+const input = document.getElementById('quickDateInput');
 
 if (title) {
 title.innerText = mode === 'display' ? '設定公文顯示日期' : '設定發文日期';
 }
 
-if (input) {
-input.value = mode === 'display' ? (docs[i].displayDate || '') : (docs[i].sendDate || '');
+const doc = getDocByNo(docNo);
+if (input && doc) {
+input.value = mode === 'display' ? (doc.displayDate || '') : (doc.sendDate || '');
 }
 
 document.getElementById('dateQuickModal').style.display = 'flex';
@@ -1824,7 +1875,17 @@ document.getElementById('dateQuickModal').style.display='none';
 
 let statsCurrentDate = new Date();
 
-function openStatsModal() {
+async function openStatsModal() {
+    if (!doneDocsLoadedAll) {
+        const fsLoader = document.getElementById('fullScreenLoader');
+        if (fsLoader) {
+            document.getElementById('fsLoaderText').innerText = "載入歷史資料中...";
+            fsLoader.classList.remove('hidden');
+        }
+        await loadAllDoneDocs();
+        if (fsLoader) fsLoader.classList.add('hidden');
+    }
+
     statsCurrentDate = new Date();
     document.getElementById('statsModal').style.display = 'flex';
     renderStatsCalendar();
@@ -1849,12 +1910,12 @@ function renderStatsCalendar() {
     const monthStart = new Date(year, month, 1).getTime();
     const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999).getTime();
     
-    const doneDocs = docs.filter(d => d.status === '已發文' && d.doneTimestamp >= monthStart && d.doneTimestamp <= monthEnd);
-    document.getElementById('statsSubtitle').innerText = `本月累計發文：${doneDocs.length} 件`;
+    const monthDoneDocs = doneDocs.filter(d => d.doneTimestamp >= monthStart && d.doneTimestamp <= monthEnd);
+    document.getElementById('statsSubtitle').innerText = `本月累計發文：${monthDoneDocs.length} 件`;
     
     // 計算每一天的數量
     const dailyCounts = {};
-    doneDocs.forEach(d => {
+    monthDoneDocs.forEach(d => {
         const dObj = new Date(d.doneTimestamp);
         const dayKey = dObj.getDate();
         dailyCounts[dayKey] = (dailyCounts[dayKey] || 0) + 1;
@@ -1959,15 +2020,18 @@ updateSend(activeDateIndex,val);
 closeDateQuickModal();
 }
 
-function updateSend(i,val){
+function updateSend(docNo,val){
 
-docs[i].sendDate=val;
+const doc = getDocByNo(docNo);
+if (!doc) return;
 
-if(!docs[i].displayDate){
-docs[i].displayDate=val;
+doc.sendDate=val;
+
+if(!doc.displayDate){
+doc.displayDate=val;
 }
 
-updateDocInCloud(docs[i].docNo, { sendDate: val, displayDate: docs[i].displayDate || val });
+updateDocInCloud(doc.docNo, { sendDate: val, displayDate: doc.displayDate || val });
 render();
 showToast('發文日期已更新');
 
@@ -2010,33 +2074,54 @@ render();
 showToast('顯示日期已更新');
 }
 
-function updateNote(i,val){
-docs[i].note=val;
-updateDocInCloud(docs[i].docNo, { note: val });
+function updateNote(docNo,val){
+const doc=getDocByNo(docNo);
+if(!doc) return;
+doc.note=val;
+updateDocInCloud(docNo, { note: val });
 }
 
-function changeStatus(i,val){
+function changeStatus(docNo,val){
 
-docs[i].status = val;
+const doc=getDocByNo(docNo);
+if(!doc) return;
+
+doc.status = val;
 
 if(val==='已發文'){
 
 const doneInfo = getDoneInfo();
 
-docs[i].doneTimestamp = doneInfo.timestamp;
-docs[i].doneTime = doneInfo.display;
+doc.doneTimestamp = doneInfo.timestamp;
+doc.doneTime = doneInfo.display;
+
+// Move to doneDocs locally
+let idx = docs.findIndex(d => String(d.docNo) === String(docNo));
+if (idx > -1) docs.splice(idx, 1);
+if (!doneDocs.find(d => String(d.docNo) === String(docNo))) {
+    doneDocs.push(doc);
+    doneDocsCount++;
+}
 
 }else{
 
-docs[i].doneTime = '';
-docs[i].doneTimestamp = 0;
+doc.doneTime = '';
+doc.doneTimestamp = 0;
+
+// Move to docs locally
+let idx = doneDocs.findIndex(d => String(d.docNo) === String(docNo));
+if (idx > -1) doneDocs.splice(idx, 1);
+if (!docs.find(d => String(d.docNo) === String(docNo))) {
+    docs.push(doc);
+    doneDocsCount = Math.max(0, doneDocsCount - 1);
+}
 
 }
 
-updateDocInCloud(docs[i].docNo, { 
+updateDocInCloud(docNo, { 
     status: val,
-    doneTime: docs[i].doneTime || '',
-    doneTimestamp: docs[i].doneTimestamp || 0
+    doneTime: doc.doneTime || '',
+    doneTimestamp: doc.doneTimestamp || 0
 });
 render();
 showToast(val==='已發文' ? '已標記為已發文' : '已改回待發');
@@ -2045,42 +2130,61 @@ showToast(val==='已發文' ? '已標記為已發文' : '已改回待發');
 
 function batchDone(){
 
-const indexes = getCheckedIndexes();
+const docNos = getCheckedDocNos();
 
-if(indexes.length===0){
+if(docNos.length===0){
 
 alert('請先勾選資料');
 return;
 
 }
 
-indexes.forEach(i=>{
+const changedDocs = [];
 
-docs[i].status='已發文';
+docNos.forEach(docNo=>{
+
+const doc=getDocByNo(docNo);
+if(!doc) return;
+
+doc.status='已發文';
 
 const doneInfo = getDoneInfo();
 
-docs[i].doneTimestamp = doneInfo.timestamp;
-docs[i].doneTime = doneInfo.display;
+doc.doneTimestamp = doneInfo.timestamp;
+doc.doneTime = doneInfo.display;
+
+// Move to doneDocs locally
+let idx = docs.findIndex(d => String(d.docNo) === String(docNo));
+if (idx > -1) docs.splice(idx, 1);
+if (!doneDocs.find(d => String(d.docNo) === String(docNo))) {
+    doneDocs.push(doc);
+    doneDocsCount++;
+}
+
+changedDocs.push(doc);
 
 });
 
-saveBatchToCloud(indexes.map(idx => docs[idx]));
+saveBatchToCloud(changedDocs);
 render();
 
-showToast(`已將 ${indexes.length} 筆資料標記為已發文`);
+showToast(`已將 ${docNos.length} 筆資料標記為已發文`);
 
 }
 
 
 
-function deleteDoc(i){
+function deleteDoc(docNo){
 
 if(confirm('確定刪除這筆資料？')){
 
-const deletedDocNo = docs[i].docNo;
-docs.splice(i,1);
-deleteDocInCloud(deletedDocNo);
+deleteDocInCloud(docNo);
+
+let idx = docs.findIndex(d => String(d.docNo) === String(docNo));
+if (idx > -1) docs.splice(idx, 1);
+idx = doneDocs.findIndex(d => String(d.docNo) === String(docNo));
+if (idx > -1) doneDocs.splice(idx, 1);
+
 render();
 showToast('資料已刪除');
 
@@ -2090,27 +2194,29 @@ showToast('資料已刪除');
 
 function batchDelete(){
 
-const indexes = getCheckedIndexes();
+const docNos = getCheckedDocNos();
 
-if(indexes.length===0){
+if(docNos.length===0){
 
 alert('請先勾選資料');
 return;
 
 }
 
-if(!confirm(`確定刪除 ${indexes.length} 筆資料？`)){
+if(!confirm(`確定刪除 ${docNos.length} 筆資料？`)){
 return;
 }
 
-indexes.sort((a,b)=>b-a);
+docNos.forEach(docNo=>{
+deleteDocInCloud(docNo);
+let idx = docs.findIndex(d => String(d.docNo) === String(docNo));
+if (idx > -1) docs.splice(idx, 1);
+idx = doneDocs.findIndex(d => String(d.docNo) === String(docNo));
+if (idx > -1) doneDocs.splice(idx, 1);
+});
 
-const deletedIds = indexes.map(idx => docs[idx].docNo);
-indexes.forEach(i => docs.splice(i, 1));
-deletedIds.forEach(id => deleteDocInCloud(id));
 render();
-
-showToast(`已刪除 ${indexes.length} 筆資料`);
+showToast(`已刪除 ${docNos.length} 筆資料`);
 
 }
 
@@ -2123,11 +2229,7 @@ document.getElementById('doneStartDate')?.value || '';
 const endDate =
 document.getElementById('doneEndDate')?.value || '';
 
-const rows = docs.filter(v=>{
-
-if(v.status !== '已發文'){
-return false;
-}
+const rows = doneDocs.filter(v=>{
 
 if(startDate){
 
@@ -2365,13 +2467,43 @@ w.print();
 
 }
 
+async function loadAllDoneDocs() {
+    if (!window.firebaseAPI || doneDocsLoadedAll) return;
+    const { db, collection, query, where, getDocs } = window.firebaseAPI;
+    try {
+        const q = query(collection(db, "docs"), where("status", "==", "已發文"));
+        const snapshot = await getDocs(q);
+        const loaded = [];
+        snapshot.forEach(doc => loaded.push(doc.data()));
+        normalizeDates(loaded);
+        doneDocs = loaded;
+        doneDocsLoadedAll = true;
+    } catch(e) {
+        console.error("Error loading all done docs:", e);
+    }
+}
+
 let isFiltersEventsSetup = false;
 function initFiltersAndEvents() {
     if (isFiltersEventsSetup) return;
     isFiltersEventsSetup = true;
+let searchTimeout;
 document.getElementById('search').addEventListener('input',()=>{
-currentPage=1;
-render();
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+        const searchVal = document.getElementById('search').value.trim();
+        if (searchVal && !doneDocsLoadedAll) {
+            const fsLoader = document.getElementById('fullScreenLoader');
+            if (fsLoader) {
+                document.getElementById('fsLoaderText').innerText = "搜尋中...正在載入歷史資料";
+                fsLoader.classList.remove('hidden');
+            }
+            await loadAllDoneDocs();
+            if (fsLoader) fsLoader.classList.add('hidden');
+        }
+        currentPage=1;
+        render();
+    }, 500);
 });
 
 document.getElementById('doneStartDate').addEventListener('change',()=>{
