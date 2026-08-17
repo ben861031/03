@@ -1037,7 +1037,17 @@ return text
 
 
 
-function confirmImport(){
+async function confirmImport(){
+
+if (!doneDocsLoadedAll) {
+    const fsLoader = document.getElementById('fullScreenLoader');
+    if (fsLoader) {
+        document.getElementById('fsLoaderText').innerText = "載入歷史資料中...";
+        fsLoader.classList.remove('hidden');
+    }
+    await loadAllDoneDocs();
+    if (fsLoader) fsLoader.classList.add('hidden');
+}
 
 const editor = document.getElementById('importText');
 
@@ -1197,8 +1207,8 @@ return;
 }
 
 const importedSet = new Set(importedDocNos.map(String));
-const newItems = parsedItems.filter(item=>!docs.some(d=>String(d.docNo)===String(item.docNo)));
-const existingItems = parsedItems.filter(item=>docs.some(d=>String(d.docNo)===String(item.docNo)));
+const newItems = parsedItems.filter(item=>!getDocByNo(item.docNo));
+const existingItems = parsedItems.filter(item=>getDocByNo(item.docNo));
 const autoDoneItems = docs.filter(d=>
 d.status==='待發' &&
 !importedSet.has(String(d.docNo))
