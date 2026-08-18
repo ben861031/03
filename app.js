@@ -1725,9 +1725,11 @@ if (justBecameEmpty && !search && currentFilter !== 'done' && currentFilter !== 
         else if (pending > 0) { targetFilter = 'pending'; navId = 'navPending'; }
     } else if (currentFilter === 'overdue') {
         if (todayCount > 0) { targetFilter = 'today'; navId = 'navToday'; }
+        else if (nodateCount > 0) { targetFilter = 'nodate'; navId = 'navNodate'; }
         else if (pending > 0) { targetFilter = 'pending'; navId = 'navPending'; }
     } else if (currentFilter === 'today') {
-        if (pending > 0) { targetFilter = 'pending'; navId = 'navPending'; }
+        if (nodateCount > 0) { targetFilter = 'nodate'; navId = 'navNodate'; }
+        else if (pending > 0) { targetFilter = 'pending'; navId = 'navPending'; }
     }
 
     if (targetFilter && navId) {
