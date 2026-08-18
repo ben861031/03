@@ -830,6 +830,28 @@ function save(){
     console.warn("save() is deprecated. Using direct Firestore updates instead.");
 }
 
+async function copyToClipboard(text) {
+    if (!text) return;
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(String(text));
+        } else {
+            const textarea = document.createElement('textarea');
+            textarea.value = String(text);
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+        showToast(`已複製表單編號：${text}`);
+    } catch(err) {
+        console.error('Failed to copy text: ', err);
+        showToast(`複製失敗：${text}`);
+    }
+}
+
 function setLinkMode(value){
 linkMode=value;
 localStorage.setItem('dispatch_link_mode',linkMode);
