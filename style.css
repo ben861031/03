@@ -951,8 +951,25 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
     padding-left: 0;
     border-left: none;
     width: 100%;
-    justify-content: space-between;
-    margin-top: 12px;
+    display: flex !important;
+    overflow-x: auto;
+    white-space: nowrap;
+    gap: 8px;
+    margin-top: 10px;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  #doneFilterArea::-webkit-scrollbar {
+    display: none;
+  }
+  #doneFilterArea .btn {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    padding: 6px 14px !important;
+    font-size: 13px !important;
+    min-height: 36px !important;
+    border-radius: 999px !important;
   }
 }
 
