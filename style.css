@@ -764,7 +764,7 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   td[data-label="狀態"] {
     position: absolute;
     right: 2px;
-    top: 12px;
+    top: 9px;
     width: auto !important;
     padding: 0;
     border: none;
