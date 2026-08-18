@@ -673,6 +673,16 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
     padding: 12px;
     font-size: 13px;
   }
+  .top-actions .btn.danger-soft {
+    flex: 1 1 100%;
+  }
+  #excelExportArea {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+  #excelExportArea .btn {
+    flex: 1 1 calc(50% - 8px);
+  }
   .table-scroll {
     border: none;
     background: transparent;
