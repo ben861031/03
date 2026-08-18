@@ -461,11 +461,20 @@ function logout() {
 }
 
 // Firestore Helpers
+function clearDoneDocsCache() {
+    doneDocsLoadedAll = false;
+    try {
+        localStorage.removeItem('firebase_done_docs_cache');
+        localStorage.removeItem('firebase_done_docs_time');
+    } catch(e){}
+}
+
 async function updateDocInCloud(docNo, data) {
     if(!window.firebaseAPI) return;
     const { db, doc, setDoc } = window.firebaseAPI;
     try {
         await setDoc(doc(db, "docs", String(docNo)), data, { merge: true });
+        clearDoneDocsCache();
     } catch(e) { console.error("Error updating doc:", e); }
 }
 
@@ -474,6 +483,7 @@ async function setDocInCloud(docNo, data) {
     const { db, doc, setDoc } = window.firebaseAPI;
     try {
         await setDoc(doc(db, "docs", String(docNo)), data);
+        clearDoneDocsCache();
     } catch(e) { console.error("Error setting doc:", e); }
 }
 
@@ -482,6 +492,7 @@ async function deleteDocInCloud(docNo) {
     const { db, doc, deleteDoc } = window.firebaseAPI;
     try {
         await deleteDoc(doc(db, "docs", String(docNo)));
+        clearDoneDocsCache();
     } catch(e) { console.error("Error deleting doc:", e); }
 }
 
@@ -505,6 +516,7 @@ async function saveBatchToCloud(docsArray) {
             console.error("Error committing batch:", e);
         }
     }
+    clearDoneDocsCache();
 }
 
 
@@ -2478,8 +2490,25 @@ w.print();
 
 }
 
-async function loadAllDoneDocs() {
-    if (!window.firebaseAPI || doneDocsLoadedAll) return;
+async function loadAllDoneDocs(forceRefresh = false) {
+    if (!window.firebaseAPI || (doneDocsLoadedAll && !forceRefresh)) return;
+    
+    // Check 1-hour LocalStorage cache to avoid expensive Firestore reads on page refresh
+    if (!forceRefresh) {
+        try {
+            const cached = localStorage.getItem('firebase_done_docs_cache');
+            const cachedTime = localStorage.getItem('firebase_done_docs_time');
+            const ONE_HOUR = 60 * 60 * 1000;
+            if (cached && cachedTime && (Date.now() - parseInt(cachedTime, 10) < ONE_HOUR)) {
+                const loaded = JSON.parse(cached);
+                normalizeDates(loaded);
+                doneDocs = loaded;
+                doneDocsLoadedAll = true;
+                return;
+            }
+        } catch(e) { console.warn("Done docs cache read error:", e); }
+    }
+
     const { db, collection, query, where, getDocs } = window.firebaseAPI;
     try {
         const q = query(collection(db, "docs"), where("status", "==", "已發文"));
@@ -2489,6 +2518,11 @@ async function loadAllDoneDocs() {
         normalizeDates(loaded);
         doneDocs = loaded;
         doneDocsLoadedAll = true;
+        
+        try {
+            localStorage.setItem('firebase_done_docs_cache', JSON.stringify(loaded));
+            localStorage.setItem('firebase_done_docs_time', String(Date.now()));
+        } catch(e) { console.warn("Done docs cache save error:", e); }
     } catch(e) {
         console.error("Error loading all done docs:", e);
     }
