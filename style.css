@@ -951,7 +951,6 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
     padding-left: 0;
     border-left: none;
     width: 100%;
-    display: flex !important;
     overflow-x: auto;
     white-space: nowrap;
     gap: 8px;

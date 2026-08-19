@@ -1007,12 +1007,7 @@ type === 'done'
 }
 
 if(dateControls){
-
-dateControls.style.display =
-type === 'done'
-? 'inline-flex'
-: 'none';
-
+    dateControls.style.display = (type === 'done' ? 'flex' : 'none');
 }
 
 if (type === 'done' && !doneDocsLoadedAll) {
