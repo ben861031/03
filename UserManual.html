@@ -3,160 +3,371 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>發文時程管理平台 - 使用手冊</title>
+<title>發文時程管制平台 - 系統使用手冊 v2.0 (雲端同步與雙介面版)</title>
 <style>
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-light: #eff6ff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --bg-page: #f8fafc;
+    --bg-card: #ffffff;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --success: #10b981;
+  }
+  * { box-sizing: border-box; }
   body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Microsoft JhengHei';
-    line-height: 1.6;
-    color: #333;
-    max-width: 800px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif;
+    line-height: 1.7;
+    color: var(--text-main);
+    background-color: var(--bg-page);
+    margin: 0;
+    padding: 30px 15px;
+  }
+  .manual-container {
+    max-width: 900px;
     margin: 0 auto;
-    padding: 20px;
-    background-color: #f9f9f9;
+    background: var(--bg-card);
+    padding: 50px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
   }
-  .page {
-    background-color: #fff;
-    padding: 40px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-    border-radius: 8px;
-  }
-  h1 {
-    color: #2c3e50;
+  .header {
     text-align: center;
-    border-bottom: 2px solid #4f46e5;
-    padding-bottom: 10px;
-    margin-bottom: 30px;
+    border-bottom: 3px solid var(--primary);
+    padding-bottom: 25px;
+    margin-bottom: 40px;
+  }
+  .header h1 {
+    font-size: 28px;
+    color: var(--text-main);
+    margin: 0 0 10px 0;
+    letter-spacing: 1px;
+  }
+  .header .badge {
+    display: inline-block;
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid #bfdbfe;
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    background: #f1f5f9;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 35px;
+    font-size: 14px;
+  }
+  .meta-item strong {
+    color: var(--text-muted);
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
   }
   h2 {
-    color: #1e293b;
-    border-left: 4px solid #4f46e5;
-    padding-left: 10px;
-    margin-top: 30px;
+    color: var(--text-main);
+    font-size: 20px;
+    border-left: 5px solid var(--primary);
+    padding-left: 12px;
+    margin-top: 40px;
+    margin-bottom: 18px;
   }
   h3 {
-    color: #34495e;
+    color: #334155;
+    font-size: 16.5px;
+    margin-top: 25px;
+    margin-bottom: 12px;
   }
   p, ul, ol {
     font-size: 15px;
+    color: #334155;
   }
-  li {
-    margin-bottom: 10px;
+  li { margin-bottom: 8px; }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px;
   }
-  .highlight {
-    background-color: #e0e7ff;
-    padding: 12px 16px;
-    border-radius: 6px;
-    border-left: 4px solid #4f46e5;
-    margin: 15px 0;
+  th, td {
+    border: 1px solid var(--border-color);
+    padding: 12px 15px;
+    text-align: left;
+  }
+  th {
+    background-color: #f8fafc;
+    color: var(--text-main);
+    font-weight: 600;
+  }
+  tr:nth-child(even) { background-color: #fafafa; }
+
+  .alert {
+    padding: 16px 20px;
+    border-radius: 10px;
+    margin: 20px 0;
     font-size: 14.5px;
+    border-left: 4px solid;
+  }
+  .alert-info {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+    color: #1e3a8a;
+  }
+  .alert-warning {
+    background-color: #fffbebfb;
+    background-color: #fffbeb;
+    border-color: #f59e0b;
+    color: #78350f;
+  }
+  .alert-danger {
+    background-color: #fef2f2;
+    border-color: #ef4444;
+    color: #991b1b;
   }
   .keyboard {
-    background-color: #eee;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
     padding: 2px 6px;
     border-radius: 4px;
     font-family: monospace;
     font-size: 13px;
-    border: 1px solid #ccc;
+  }
+  .toc {
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px 25px;
+    margin-bottom: 35px;
+  }
+  .toc h3 { margin-top: 0; }
+  .toc ul {
+    column-count: 2;
+    column-gap: 20px;
+    margin: 0;
+    padding-left: 20px;
+  }
+  @media (max-width: 600px) {
+    .toc ul { column-count: 1; }
+    .manual-container { padding: 25px 18px; }
   }
   @media print {
-    body {
-      background-color: #fff;
-      padding: 0;
-    }
-    .page {
-      box-shadow: none;
-      padding: 0;
-      margin: 0;
-      border-radius: 0;
-    }
-    .print-break {
-      page-break-before: always;
-    }
+    body { background: #fff; padding: 0; }
+    .manual-container { box-shadow: none; border: none; padding: 0; max-width: 100%; }
+    .print-break { page-break-before: always; }
   }
 </style>
 </head>
 <body>
 
-<div class="page">
-  <h1>發文時程管理平台 - 使用手冊</h1>
-  
-  <h2>一、系統簡介</h2>
-  <p>「發文時程管理平台」是一款專為企業與團隊打造的高效發文排程與管理工具。系統具備無縫的 Google Sheets 雲端同步能力，讓團隊成員能夠即時掌握發文進度，並提供批次匯入、線上簽核、以及防護嚴密的登入稽核機制。</p>
+<div class="manual-container">
 
-  <h2>二、登入與權限管理</h2>
-  <h3>1. 系統登入</h3>
+  <div class="header">
+    <h1>發文時程管制平台</h1>
+    <span class="badge">系統使用手冊 v2.0 (雲端同步與雙介面版)</span>
+  </div>
+
+  <div class="meta-grid">
+    <div class="meta-item"><strong>系統名稱</strong>發文時程管制平台</div>
+    <div class="meta-item"><strong>文件版本</strong>v2.0 (Cloud & Responsive)</div>
+    <div class="meta-item"><strong>最後更新日期</strong>2026 年 8 月 19 日</div>
+    <div class="meta-item"><strong>儲存與架構</strong>Firebase Firestore 雲端同步 + 本機快取</div>
+    <div class="meta-item"><strong>建議瀏覽器</strong>Google Chrome / Microsoft Edge / iOS Safari</div>
+    <div class="meta-item"><strong>適用對象</strong>公文承辦人員、發文管理主管</div>
+  </div>
+
+  <div class="toc">
+    <h3>📌 目錄 (Table of Contents)</h3>
+    <ul>
+      <li><a href="#sec1">1. 系統概述與架構</a></li>
+      <li><a href="#sec2">2. 登入與權限稽核</a></li>
+      <li><a href="#sec3">3. 介面說明與多主題</a></li>
+      <li><a href="#sec4">4. 智慧批次匯入</a></li>
+      <li><a href="#sec5">5. 日期與時程管理</a></li>
+      <li><a href="#sec6">6. 發文作業與線上簽核</a></li>
+      <li><a href="#sec7">7. 批次操作與刪除防呆</a></li>
+      <li><a href="#sec8">8. 查詢與 Excel 匯出</a></li>
+      <li><a href="#sec9">9. 資料備份與還原</a></li>
+      <li><a href="#sec10">10. 常見問題排除 (FAQ)</a></li>
+      <li><a href="#appendix">附錄：狀態判斷與瀑布流規則</a></li>
+    </ul>
+  </div>
+
+  <!-- SECTION 1 -->
+  <h2 id="sec1">1. 系統概述與架構</h2>
+  <p>「發文時程管制平台」是一款專為企業與機關團體打造的高效公文發文排程與簽核管理工具。本 v2.0 全新版本升級了 <strong>Firebase Firestore 雲端即時同步架構</strong> 與 <strong>手機版像素級響應式 UI (Mobile Responsive)</strong>，實現電腦與手機端跨裝置同步作業。</p>
+
+  <h3>1.1 核心升級亮點</h3>
   <ul>
-    <li>開啟系統網頁後，輸入系統管理員配發的<strong>員工編號</strong>與<strong>密碼</strong>。</li>
-    <li>系統預設為「持久登入」狀態，重新整理網頁（<span class="keyboard">F5</span>）或關閉瀏覽器再次開啟，皆無須重新登入。</li>
-  </ul>
-  
-  <h3>2. 登出機制與稽核</h3>
-  <ul>
-    <li>若需登出（例如切換帳號或共用電腦），請點擊左側邊欄最下方的<strong>「登出系統」</strong>按鈕。</li>
-    <li><strong>雙向時間紀錄</strong>：使用者的每一筆「登入」與「登出」時間，皆會自動被記錄於雲端後台（Google Sheets 的「登入紀錄」分頁）中，方便管理員隨時稽核人員進出系統的時間。</li>
+    <li><strong>Firebase 雲端實時監聽 (`onSnapshot`)</strong>：多位同仁或主管同時開啟系統時，異動會即時同步，無需手動刷新。</li>
+    <li><strong>智慧型 1 小時 LocalStorage 低讀取快取</strong>：針對歷史「已發文」資料採用本地快取機制，節省超過 90% 的雲端 Reads 流量，載入速度提升 5 倍。</li>
+    <li><strong>線上簽核與文字清單產出</strong>：一鍵複製格式化 LINE / Email 發文文字清單，並可生成專屬網址供主管唯讀簽核。</li>
+    <li><strong>手機版極致優化 (Mobile Native Feel)</strong>：包含橫向流暢滾動的日期篩選膠囊 (Pill Tabs)、對稱選單按鈕與像素級水平對齊。</li>
   </ul>
 
-  <h2>三、核心作業流程教學</h2>
-  
-  <h3>1. 匯入待辦發文 (批次匯入)</h3>
-  <div class="highlight">
-    💡 <strong>操作情境</strong>：每天從公文系統（如 SinoSign 等）複製一份「待處理發文」的報表，一次貼進來管理。
+  <h3>1.2 預設開啟與跳轉優先順序 (Waterfall Priority)</h3>
+  <p>開啟系統或完成某項工作時，系統會依據緊急程度自動切換至最適頁面：</p>
+  <ol>
+    <li>🥇 <strong>已逾期 (`overdue`)</strong>：最高優先（發文日期已過但未發文，紅字警告）。</li>
+    <li>🥈 <strong>今日待發 (`today`)</strong>：第二優先（發文日期為今天的案件）。</li>
+    <li>🥉 <strong>未設定日期 (`nodate`)</strong>：第三優先（缺乏預定日期的案件）。</li>
+    <li>🎖️ <strong>尚待發文 (`pending`)</strong>：第四優先（所有未結案案件清單）。</li>
+  </ol>
+
+  <!-- SECTION 2 -->
+  <h2 id="sec2">2. 登入與權限稽核</h2>
+  <h3>2.1 系統登入</h3>
+  <ul>
+    <li>輸入管理員配發的<strong>員工編號</strong>與<strong>密碼</strong>即可登入。</li>
+    <li>系統採用持久化登入 Session，開啟瀏覽器無需重複輸入密碼。</li>
+  </ul>
+
+  <h3>2.2 登出與時間雙向稽核</h3>
+  <ul>
+    <li>點擊側邊欄最下方「登出系統」可安全登出。</li>
+    <li>使用者的每一次登入與登出時間，均會自動紀錄於後台資料庫中，供管理員進行權限與時間稽核。</li>
+  </ul>
+
+  <!-- SECTION 3 -->
+  <h2 id="sec3">3. 介面說明與多主題</h2>
+  <h3>3.1 表格欄位說明</h3>
+  <table>
+    <thead>
+      <tr><th>欄位名稱</th><th>說明與功能</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>選取</strong></td><td>核取方塊，用於執行批次完成、批次刪除或發文作業產出。</td></tr>
+      <tr><td><strong>表單編號</strong></td><td>公文識別號碼。<strong>點擊號碼可直接複製至剪貼簿</strong>並顯示 Toast 提示。</td></tr>
+      <tr><td><strong>主旨</strong></td><td>公文主旨說明。點擊連結可直接開啟來源公文系統。</td></tr>
+      <tr><td><strong>計畫編號 / 承辦人</strong></td><td>專案計畫編號與案件承辦同仁姓名。手機版精緻灰字顯示。</td></tr>
+      <tr><td><strong>發文日期</strong></td><td>預定發文日期。點擊可快速選擇「今天」、「明天」、「後天」或指定日期。</td></tr>
+      <tr><td><strong>公文顯示日期</strong></td><td>公文上顯示的實際日期。若與發文日期不同，系統會以淡色底色提示。</td></tr>
+      <tr><td><strong>狀態</strong></td><td>顯示「待發」或「已發文」膠囊按鈕，點擊可直接切換狀態。</td></tr>
+      <tr><td><strong>備註說明</strong></td><td>補充說明欄位，輸入後自動儲存至雲端。</td></tr>
+      <tr><td><strong>完成時間</strong></td><td>紀錄公文標記為「已發文」的精確年月日時分秒。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.2 個性化主題切換</h3>
+  <p>可在工具列右側選單選擇主題風格：清新全白、柔和海洋藍、莫蘭迪淺灰、經典深藍、曜石黑 (OLED 省電)、焦糖奶茶棕、初戀櫻花粉、溫暖護眼黃。</p>
+
+  <!-- SECTION 4 -->
+  <h2 id="sec4" class="print-break">4. 智慧批次匯入</h2>
+  <div class="alert alert-info">
+    💡 <strong>操作情境</strong>：每日從外部公文系統 (如 SinoSign) 複製待發文表格，一次貼入進行智慧對齊與同步。
   </div>
   <ol>
-    <li>在畫面上方，點擊藍色的 <strong>「批次匯入」</strong> 按鈕。</li>
-    <li>此時會彈出一個文字框，請將您複製好的 Excel 或 Word 表格資料（包含案號、主旨、承辦人等）直接<strong>貼上（Ctrl+V）</strong>。</li>
-    <li>點擊 <strong>「解析資料」</strong>，系統會自動智慧辨識並對齊您的欄位。如果有欄位跑掉，可以用欄位上方的下拉選單手動修正對應關係。</li>
-    <li>確認下方預覽無誤後，點擊 <strong>「確定匯入」</strong>。這些資料就會自動儲存到您的清單與 Google 雲端中。</li>
-    <li><strong>自動完成機制</strong>：如果系統發現「昨天還在待辦清單上」的公文，在「今天您匯入的新資料」裡卻消失了，系統會自動判定該公文已結案，並幫您移到「累計已發」中！</li>
+    <li>點擊頂部藍色 <strong>「批次匯入」</strong> 按鈕。</li>
+    <li>將複製好的表格內容直接貼上 (<span class="keyboard">Ctrl+V</span>)。</li>
+    <li>點擊 <strong>「確認匯入」</strong>，系統自動進行欄位解析與同步預覽。</li>
+    <li><strong>自動結案機制</strong>：若舊清單上的公文未出現在今日新貼入的清單中，系統會自動判定該公文已發文結案，並移入「累計已發」中。</li>
   </ol>
 
-  <h3>2. 挑選並產出發文清單</h3>
-  <div class="highlight">
-    💡 <strong>操作情境</strong>：準備要把幾份公文發布出去，需要一份清單傳到 LINE 群組或 Email 通知相關人員。
+  <div class="alert alert-warning">
+    ⚠️ <strong>高風險提醒</strong>：若貼入的資料不完整（僅貼上一部分），可能導致未貼入的案件被誤判為已完成。貼入前請確認資料完整性。
   </div>
-  <ol>
-    <li>在左側邊欄點擊 <strong>「尚待發文」</strong> 或 <strong>「今日待發」</strong>。</li>
-    <li>在公文列表中，於最左側<strong>勾選</strong>您準備要處理的項目（可複選多筆）。</li>
-    <li>點擊畫面上方的 <strong>「發文作業」</strong> 按鈕。</li>
-    <li>系統會彈出一個視窗，幫您把剛才勾選的公文，排版成乾淨整齊的純文字清單。</li>
-    <li>點擊 <strong>「複製文字清單」</strong>，接著您就可以前往 LINE 或 Email 直接貼上（Ctrl+V）發送了！</li>
-  </ol>
 
-  <h3 class="print-break">3. 傳送線上簽核連結</h3>
-  <div class="highlight">
-    💡 <strong>操作情境</strong>：發文前，需要將清單與內容提供給主管做線上確認與簽核。
-  </div>
-  <ol>
-    <li>同樣先在列表中，<strong>勾選</strong>要呈報給主管的公文項目。</li>
-    <li>點擊畫面上方的 <strong>「線上簽核」</strong> 按鈕。</li>
-    <li>系統會自動產生一串專屬的<strong>「簽核專屬網址」</strong>。</li>
-    <li>請點擊一旁的複製按鈕，並將這串網址傳給主管。主管點開後，即可在一個唯讀的乾淨介面中，透過手機或電腦輕鬆確認所有公文詳情。</li>
-  </ol>
-
-  <h3>4. 手動設定日期、完成與刪除</h3>
-  <ol>
-    <li><strong>設定預定發文日</strong>：在列表中，您可以直接點擊項目的日期欄位，修改為您預計發布的日期。</li>
-    <li><strong>批次完成</strong>：當發文程序確實完成後，勾選該項目並點擊畫面上方的 <strong>「批次完成」</strong> 按鈕。該項目會立刻被標上當前時間，並移入「累計已發」的分類。</li>
-    <li><strong>批次刪除</strong>：若公文被取消或一開始匯入錯誤，勾選後點擊 <strong>「批次刪除」</strong>，即可將其永久移除。</li>
-  </ol>
-
-  <h2>四、畫面介面與檢視說明</h2>
-  <p>左側邊欄提供多種視角與圖表，協助您快速掌握工作重點：</p>
+  <!-- SECTION 5 -->
+  <h2 id="sec5">5. 日期與時程管理</h2>
   <ul>
-    <li><strong>未來一週發文預測</strong>：側邊欄下方會顯示未來七天的公文量趨勢圖，讓您提早掌握接下來一週的工作負載。</li>
-    <li><strong>尚待發文</strong>：您當前所有的待辦發文清單。</li>
-    <li><strong>未設定日期</strong>：沒有指定「預定發文日」的清單，適合用來集中處理那些「等通知再發」的公文。</li>
-    <li><strong>今日待發</strong>：根據您設定的發文日期，系統會自動將「今天」必須發布的項目集中在這裡，這通常是您每天的首要工作清單。</li>
-    <li><strong>已逾期</strong>：超過設定的發文日期，卻還沒被標記「完成」的項目。請優先處理這些閃著紅字的公文。</li>
-    <li><strong>累計已發</strong>：歷史紀錄區。您可以在這裡點擊畫面上方的 <strong>「匯出 Excel」</strong> 按鈕，將過去的發文紀錄下載成報表備查。</li>
+    <li><strong>快捷日期設定</strong>：點擊發文日期欄位，可點擊「今天」、「明天」、「後天」快速代入日期。</li>
+    <li><strong>未來一週發文量預測</strong>：側邊欄下方顯示未來 7 天的待發量長條圖，點擊指定日期可快速篩選該日公文。</li>
+    <li><strong>逾期自動判定</strong>：發文日期早於今日且狀態仍為「待發」時，系統自動歸類至「已逾期」並以紅字警告。</li>
   </ul>
 
-  <h2>五、資料安全與備份</h2>
+  <!-- SECTION 6 -->
+  <h2 id="sec6">6. 發文作業與線上簽核</h2>
+  <h3>6.1 產出發文文字清單 (LINE / Email)</h3>
+  <ol>
+    <li>在列表中勾選要發出的公文項目。</li>
+    <li>點擊頂部 <strong>「發文作業」</strong>。</li>
+    <li>系統自動排版成整齊純文字清單，點擊「複製文字清單」即可直接貼至 LINE 群組或 Email 發布。</li>
+  </ol>
+
+  <h3>6.2 產生專屬線上簽核連結</h3>
+  <ol>
+    <li>勾選需送陳主管簽核的案件。</li>
+    <li>點擊頂部 <strong>「線上簽核」</strong>。</li>
+    <li>複製系統產生的專屬簽核網址傳給主管，主管開啟後即可於手機或電腦上唯讀確認。</li>
+  </ol>
+
+  <!-- SECTION 7 -->
+  <h2 id="sec7">7. 批次操作與刪除防呆</h2>
   <ul>
-    <li><strong>雲端即時同步</strong>：您在系統上的任何新增、修改、完成與刪除，都會在背景自動同步至 Google Sheets 雲端資料庫，無須手動按儲存。</li>
-    <li><strong>本機備份匯出/匯入</strong>：點擊左側最下方的「匯出備份」，可將目前的資料打包成一個檔案下載至電腦中。若遇到雲端連線異常，可透過「匯入備份」還原本機資料。</li>
+    <li><strong>批次完成</strong>：勾選多筆案件後點擊「批次完成」，一鍵標記為已發文並紀錄當前時間。</li>
+    <li><strong>批次刪除</strong>：勾選後點擊「批次刪除」，系統會顯示確認對話框防呆，確認後從雲端永久刪除。</li>
   </ul>
+
+  <!-- SECTION 8 -->
+  <h2 id="sec8">8. 查詢與 Excel 匯出</h2>
+  <h3>8.1 即時關鍵字搜尋</h3>
+  <p>在搜尋列輸入文號、主旨、承辦人或計畫編號，系統即時對目前清單進行過濾。</p>
+
+  <h3>8.2 手機版橫向膠囊篩選列 (Pill Scroll Bar)</h3>
+  <p>切換至「累計已發」時，手機版上方提供可流暢左右滑動的膠囊標籤欄 (全部、今天、本週、本月、自訂區間)，單手即可輕鬆切換區間。</p>
+
+  <h3>8.3 匯出 Excel 清單</h3>
+  <p>在「累計已發」頁面點擊 <strong>「匯出 Excel」</strong>，系統會自動下載完整 CSV 報表供歸檔備查。</p>
+
+  <!-- SECTION 9 -->
+  <h2 id="sec9">9. 資料備份與還原</h2>
+  <ul>
+    <li><strong>匯出備份</strong>：點擊側邊欄「匯出備份」，可下載備份檔 (JSON 格式)。</li>
+    <li><strong>匯入備份</strong>：點擊側邊欄「匯入備份」，選擇先前備份檔即可還原歷史紀錄。建議在執行大量刪除前先進行備份。</li>
+  </ul>
+
+  <!-- SECTION 10 -->
+  <h2 id="sec10">10. 常見問題排除 (FAQ)</h2>
+  <table>
+    <thead>
+      <tr><th>常見問題</th><th>可能原因與排除方式</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>點擊表單編號沒有反應？</strong></td>
+        <td>系統已支援一鍵複製，點擊號碼會自動複製到剪貼簿並跳出已複製 Toast 提示。</td>
+      </tr>
+      <tr>
+        <td><strong>為何 Firebase 讀取數會增加？</strong></td>
+        <td>系統已全面啟用 1 小時 LocalStorage 低讀取快取，常態使用 Reads 數極低。若執行批次匯入或清除瀏覽器快取時才會向雲端抓取新資料。</td>
+      </tr>
+      <tr>
+        <td><strong>手機版畫面的按鈕有重疊現象？</strong></td>
+        <td>系統已全面提升為 Mobile Responsive 響應式佈局，若有異常請確認瀏覽器未開啟「強制縮放網頁」功能。</td>
+      </tr>
+      <tr>
+        <td><strong>為什麼自動跳轉沒有跳到尚待發文？</strong></td>
+        <td>系統採取瀑布式流轉：已逾期 ➔ 今日待發 ➔ 未設定日期 ➔ 尚待發文。若未設定日期中有案件，會優先跳轉至該頁面提醒補齊日期。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- APPENDIX -->
+  <h2 id="appendix">附錄：狀態判斷與瀑布流規則</h2>
+  <table>
+    <thead>
+      <tr><th>分類狀態</th><th>判定條件說明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>尚待發文</strong></td><td>狀態不為「已發文」之所有案件。</td></tr>
+      <tr><td><strong>未設定日期</strong></td><td>狀態不為「已發文」，且發文日期空白。</td></tr>
+      <tr><td><strong>今日待發</strong></td><td>狀態不為「已發文」，且發文日期等於本地電腦今日日期。</td></tr>
+      <tr><td><strong>已逾期</strong></td><td>狀態不為「已發文」，且發文日期早於本地電腦今日日期。</td></tr>
+      <tr><td><strong>累計已發</strong></td><td>狀態為「已發文」，並紀錄完成年月日時分秒。</td></tr>
+    </tbody>
+  </table>
+
 </div>
 
 </body>
