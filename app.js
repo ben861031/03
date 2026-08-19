@@ -365,7 +365,12 @@ async function initFirebaseSync() {
             isFirstSync = false;
         }
         
-        render();
+        // 若使用者正在輸入備註，暫緩重新渲染 DOM，避免輸入法中斷
+        const activeEl = document.activeElement;
+        const isEditingNote = activeEl && activeEl.tagName === 'INPUT' && activeEl.classList.contains('note');
+        if (!isEditingNote) {
+            render();
+        }
         
         // 資料載入完成，隱藏全螢幕載入動畫
         const fsLoader = document.getElementById('fullScreenLoader');
@@ -578,6 +583,7 @@ function setupEvents() {
             if (action === 'updateSend') updateSend(docNo, val);
             else if (action === 'updateDisplay') updateDisplay(docNo, val);
             else if (action === 'changeStatus') changeStatus(docNo, val);
+            else if (action === 'updateNote') updateNote(docNo, val);
         });
 
         tbody.addEventListener('input', e => {
@@ -586,7 +592,10 @@ function setupEvents() {
             const docNo = e.target.dataset.docno;
             const val = e.target.value;
             
-            if (action === 'updateNote') updateNote(docNo, val);
+            if (action === 'updateNote') {
+                const doc = getDocByNo(docNo);
+                if (doc) doc.note = val;
+            }
         });
     }
     
