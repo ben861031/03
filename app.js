@@ -317,6 +317,18 @@ let doneDocsCount = 0; // 儀表板使用的累計已發數量
 let doneDocs = [];     // 已載入的歷史公文
 let doneDocsLoadedAll = false; // 是否已載入所有歷史公文
 
+function waitForFirstSync() {
+    return new Promise((resolve) => {
+        if (!isFirstSync) return resolve();
+        const check = setInterval(() => {
+            if (!isFirstSync) {
+                clearInterval(check);
+                resolve();
+            }
+        }, 100);
+    });
+}
+
 async function initFirebaseSync() {
     if (!window.firebaseAPI) {
         console.error("Firebase API not ready");
@@ -1078,15 +1090,25 @@ return text
 
 async function confirmImport(){
 
+const fsLoader = document.getElementById('fullScreenLoader');
+
+if (isFirstSync) {
+    if (fsLoader) {
+        document.getElementById('fsLoaderText').innerText = "雲端資料初始化中，請稍候...";
+        fsLoader.classList.remove('hidden');
+    }
+    await waitForFirstSync();
+}
+
 if (!doneDocsLoadedAll) {
-    const fsLoader = document.getElementById('fullScreenLoader');
     if (fsLoader) {
         document.getElementById('fsLoaderText').innerText = "載入歷史資料中...";
         fsLoader.classList.remove('hidden');
     }
     await loadAllDoneDocs();
-    if (fsLoader) fsLoader.classList.add('hidden');
 }
+
+if (fsLoader) fsLoader.classList.add('hidden');
 
 const editor = document.getElementById('importText');
 
