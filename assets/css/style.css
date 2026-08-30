@@ -1584,6 +1584,230 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   }
 }
 
+/* v2.1.8 帳號與權限整合：單一清單、登入時間與隨捲動可用的關閉按鈕。 */
+.access-modal-heading {
+  position: sticky;
+  top: -32px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: -32px -32px 18px;
+  padding: 20px 20px 14px 32px;
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom: 1px solid #e8edf3;
+  box-shadow: 0 5px 14px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.access-modal-heading h2 {
+  margin: 0;
+}
+
+.access-modal-close {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  padding: 0 0 3px;
+  border: 1px solid #d8e0ea;
+  border-radius: 13px;
+  background: #f8fafc;
+  color: #334155;
+  font: 400 30px/1 system-ui, sans-serif;
+  cursor: pointer;
+  transition: background-color .2s, border-color .2s, color .2s, transform .2s;
+}
+
+.access-modal-close:hover {
+  color: #0f172a;
+  background: #eef2f7;
+  border-color: #bdc8d5;
+}
+
+.access-modal-close:active {
+  transform: scale(.96);
+}
+
+.access-modal-close:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, .22);
+  outline-offset: 2px;
+}
+
+.account-management-list {
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 15px;
+  background: #f6f8fb;
+  scrollbar-gutter: stable;
+}
+
+.account-management-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px 18px;
+  padding: 15px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 7px rgba(15, 23, 42, .035);
+}
+
+.account-management-row + .account-management-row {
+  margin-top: 9px;
+}
+
+.account-details {
+  min-width: 0;
+}
+
+.account-identity {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  min-width: 0;
+}
+
+.account-identity strong {
+  color: #0f172a;
+  font-size: 16px;
+  letter-spacing: .02em;
+}
+
+.account-identity span {
+  min-width: 0;
+  color: #475569;
+  overflow-wrap: anywhere;
+}
+
+.account-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.account-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 27px;
+  padding: 4px 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.account-status-badge.active {
+  color: #047857;
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.account-status-badge.disabled {
+  color: #9a6700;
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.account-status-badge.missing {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.account-last-login {
+  margin-top: 9px;
+  color: #64748b;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.account-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 286px;
+}
+
+.account-action {
+  min-height: 36px;
+  padding: 6px 10px;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.permission-soft {
+  color: #0369a1;
+  background: #fff;
+  border-color: #bae6fd;
+}
+
+.permission-soft:hover {
+  color: #075985;
+  background: #f0f9ff;
+  border-color: #7dd3fc;
+}
+
+.account-list-message {
+  padding: 18px 14px;
+  color: #64748b;
+  text-align: center;
+}
+
+.account-list-message.error {
+  color: #b91c1c;
+}
+
+@media (max-width: 768px) {
+  .access-modal-heading {
+    top: -22px;
+    margin: -22px -18px 16px;
+    padding: 14px 10px 12px 18px;
+  }
+
+  .access-modal-heading h2 {
+    font-size: 21px;
+  }
+
+  .access-modal-close {
+    flex-basis: 44px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .account-management-list {
+    max-height: min(390px, 48dvh) !important;
+    padding: 8px;
+    border-radius: 13px;
+  }
+
+  .account-management-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .account-actions {
+    justify-content: stretch;
+    max-width: none;
+  }
+
+  .account-action {
+    flex: 1 1 calc(50% - 3px);
+    min-width: 108px;
+    min-height: 42px;
+  }
+}
+
 /* v2.1.7 柔和資訊面板：移除表格外框與中央直線，降低視覺重量。 */
 @media (max-width: 768px) {
   td[data-label="計畫編號"],

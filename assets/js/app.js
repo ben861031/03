@@ -270,9 +270,12 @@ white-space:pre-wrap;
 </div>
 </div>
 <div class="modal" id="accessModal">
-<div class="modal-box" style="width:760px;max-width:95%;">
+<div class="modal-box access-modal-box" style="width:760px;max-width:95%;">
+<div class="access-modal-heading">
 <h2>帳號與同仁白名單</h2>
-<p style="margin:8px 0 14px;color:#64748b;">管理員可建立、停用或刪除本系統承辦帳號；新帳號首次登入必須更改臨時密碼。</p>
+<button type="button" class="access-modal-close" onclick="closeAccessModal()" aria-label="關閉帳號與同仁白名單" title="關閉">×</button>
+</div>
+<p style="margin:8px 0 14px;color:#64748b;">管理員可建立、停用或刪除承辦帳號，也可管理既有帳號的發文系統權限；新帳號首次登入必須更改臨時密碼。</p>
 <strong>建立新帳號</strong>
 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;">
 <input id="newAccountEmployeeId" inputmode="numeric" maxlength="12" placeholder="輸入 4–12 位員工編號" style="flex:1;min-width:220px;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
@@ -280,15 +283,13 @@ white-space:pre-wrap;
 <button class="btn primary-import" onclick="createManagedAccount()">建立帳號</button>
 </div>
 <div id="temporaryCredential" style="display:none;margin-top:10px;padding:12px;border:1px solid #f59e0b;background:#fffbeb;border-radius:8px;white-space:pre-wrap;"></div>
-<strong style="display:block;margin-top:18px;">既有帳號加入白名單</strong>
+<strong style="display:block;margin-top:18px;">既有登入帳號加入權限</strong>
 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
 <input id="accessEmployeeId" inputmode="numeric" maxlength="12" placeholder="輸入 4–12 位員工編號" style="flex:1;min-width:220px;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
-<button class="btn green" onclick="addAccessUser()">加入白名單</button>
+<button class="btn green" onclick="addAccessUser()">加入權限</button>
 </div>
-<strong style="display:block;margin-top:18px;">本系統承辦帳號</strong>
-<div id="managedAccountList" class="preview-list" style="margin-top:8px;max-height:260px;"></div>
-<strong style="display:block;margin-top:18px;">白名單紀錄</strong>
-<div id="accessList" class="preview-list" style="margin-top:14px;max-height:320px;"></div>
+<strong style="display:block;margin-top:18px;">承辦帳號與權限</strong>
+<div id="managedAccountList" class="account-management-list" style="margin-top:8px;max-height:390px;"></div>
 <div style="display:flex;justify-content:flex-end;margin-top:14px;">
 <button class="btn secondary" onclick="closeAccessModal()">關閉</button>
 </div>
@@ -739,62 +740,145 @@ async function createManagedAccount() {
         await loadManagedAccounts(true);
     } catch (error) {
         console.error('Create account error:', error);
-        alert('建立帳號失敗；若帳號已存在，請改用「加入白名單」。');
+        alert('建立帳號失敗；若帳號已存在，請改用「加入權限」。');
     }
 }
 
-function renderAccessList(entries) {
-    const list = document.getElementById('accessList');
+function formatLastSignInTime(value) {
+    if (!value) return '尚未登入';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '尚未登入';
+    const formatter = new Intl.DateTimeFormat('zh-TW', {
+        timeZone: 'Asia/Taipei',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+    const parts = Object.fromEntries(
+        formatter.formatToParts(date)
+            .filter(part => part.type !== 'literal')
+            .map(part => [part.type, part.value])
+    );
+    return `${parts.year}/${parts.month}/${parts.day} ${parts.hour}:${parts.minute}`;
+}
+
+function createAccountStatusBadge(text, state) {
+    const badge = document.createElement('span');
+    badge.className = `account-status-badge ${state}`;
+    badge.textContent = text;
+    return badge;
+}
+
+function createAccountActionButton(text, className, handler) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `btn account-action ${className}`;
+    button.textContent = text;
+    button.addEventListener('click', handler);
+    return button;
+}
+
+function renderManagedAccountList(entries) {
+    const list = document.getElementById('managedAccountList');
     list.replaceChildren();
     if (entries.length === 0) {
         const empty = document.createElement('div');
-        empty.textContent = '目前尚未加入承辦同仁。';
+        empty.className = 'account-list-message';
+        empty.textContent = '目前沒有已授權的承辦帳號。';
         list.appendChild(empty);
         return;
     }
     entries.forEach(entry => {
         const row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 4px;border-bottom:1px solid #e2e8f0;';
-        const label = document.createElement('span');
-        const accountState = entry.authExists === false ? '（Auth 帳號不存在）' : (entry.active === false ? '（已停用）' : '');
-        label.textContent = `${entry.employeeId || '未知員編'}　${entry.email}${accountState}`;
-        const removeButton = document.createElement('button');
-        removeButton.type = 'button';
-        removeButton.className = 'btn danger-soft';
-        removeButton.style.cssText = 'padding:5px 10px;min-height:32px;';
-        removeButton.textContent = '移除';
-        removeButton.addEventListener('click', () => removeAccessUser(entry.email));
-        row.append(label, removeButton);
+        row.className = 'account-management-row';
+
+        const details = document.createElement('div');
+        details.className = 'account-details';
+        const identity = document.createElement('div');
+        identity.className = 'account-identity';
+        const employeeId = document.createElement('strong');
+        employeeId.textContent = entry.employeeId || '未知員編';
+        const email = document.createElement('span');
+        email.textContent = entry.email || '無電子郵件';
+        identity.append(employeeId, email);
+
+        const statuses = document.createElement('div');
+        statuses.className = 'account-statuses';
+        if (entry.authExists === false) {
+            statuses.append(createAccountStatusBadge('帳號：不存在', 'missing'));
+        } else if (entry.disabled) {
+            statuses.append(createAccountStatusBadge('帳號：已停用', 'disabled'));
+        } else {
+            statuses.append(createAccountStatusBadge('帳號：使用中', 'active'));
+        }
+        statuses.append(createAccountStatusBadge(
+            entry.active === false ? '權限：已停用' : '權限：已開通',
+            entry.active === false ? 'disabled' : 'active'
+        ));
+
+        const lastLogin = document.createElement('div');
+        lastLogin.className = 'account-last-login';
+        lastLogin.textContent = entry.authExists === false
+            ? '最近登入：無登入帳號'
+            : `最近登入：${formatLastSignInTime(entry.lastSignInTime)}`;
+        details.append(identity, statuses, lastLogin);
+
+        const actions = document.createElement('div');
+        actions.className = 'account-actions';
+        if (entry.authExists !== false && entry.uid) {
+            actions.append(createAccountActionButton(
+                entry.disabled ? '啟用帳號' : '停用帳號',
+                'secondary',
+                () => setManagedAccountDisabled(entry.uid, !entry.disabled)
+            ));
+            actions.append(createAccountActionButton(
+                '移除權限',
+                'permission-soft',
+                () => removeAccessUser(entry.email)
+            ));
+            actions.append(createAccountActionButton(
+                '刪除帳號',
+                'danger-soft',
+                () => deleteManagedAccount(entry.uid, entry.email)
+            ));
+        } else {
+            actions.append(createAccountActionButton(
+                '移除失效紀錄',
+                'danger-soft',
+                () => removeAccessUser(entry.email)
+            ));
+        }
+        row.append(details, actions);
         list.appendChild(row);
     });
 }
 
 function showAccountManagementError(messageText) {
-    ['managedAccountList', 'accessList'].forEach(id => {
-        const list = document.getElementById(id);
-        list.replaceChildren();
-        const message = document.createElement('div');
-        message.textContent = messageText;
-        list.appendChild(message);
-    });
+    const list = document.getElementById('managedAccountList');
+    list.replaceChildren();
+    const message = document.createElement('div');
+    message.className = 'account-list-message error';
+    message.textContent = messageText;
+    list.appendChild(message);
 }
 
 async function loadManagedAccounts(forceRefresh = false) {
     if (!isAdmin()) return;
     const list = document.getElementById('managedAccountList');
-    const accessList = document.getElementById('accessList');
     let users = accountManagementCache.users;
     const cacheFresh = Date.now() - accountManagementCache.fetchedAt < 30000;
 
     if (!forceRefresh && cacheFresh) {
-        renderAccessList(users);
+        renderManagedAccountList(users);
     } else {
-        [list, accessList].forEach(container => {
-            container.replaceChildren();
-            const loading = document.createElement('div');
-            loading.textContent = '載入中…';
-            container.appendChild(loading);
-        });
+        list.replaceChildren();
+        const loading = document.createElement('div');
+        loading.className = 'account-list-message';
+        loading.textContent = '載入中…';
+        list.appendChild(loading);
     }
     try {
         if (forceRefresh || !cacheFresh) {
@@ -803,41 +887,10 @@ async function loadManagedAccounts(forceRefresh = false) {
             users.sort((a, b) => String(a.employeeId || '').localeCompare(String(b.employeeId || '')));
             accountManagementCache = { users, fetchedAt: Date.now() };
         }
-        renderAccessList(users);
-        list.replaceChildren();
-        const authUsers = users.filter(user => user.authExists !== false && user.uid);
-        if (authUsers.length === 0) {
-            const empty = document.createElement('div');
-            empty.textContent = '目前沒有本系統承辦帳號。';
-            list.appendChild(empty);
-            return;
-        }
-        authUsers.forEach(user => {
-            const row = document.createElement('div');
-            row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 4px;border-bottom:1px solid #e2e8f0;flex-wrap:wrap;';
-            const label = document.createElement('span');
-            label.textContent = `${user.employeeId}　${user.email}　${user.disabled ? '已停用' : '使用中'}`;
-            const actions = document.createElement('span');
-            actions.style.cssText = 'display:flex;gap:6px;';
-            const toggleButton = document.createElement('button');
-            toggleButton.type = 'button';
-            toggleButton.className = 'btn secondary';
-            toggleButton.style.cssText = 'padding:5px 10px;min-height:32px;';
-            toggleButton.textContent = user.disabled ? '啟用' : '停用';
-            toggleButton.addEventListener('click', () => setManagedAccountDisabled(user.uid, !user.disabled));
-            const deleteButton = document.createElement('button');
-            deleteButton.type = 'button';
-            deleteButton.className = 'btn danger-soft';
-            deleteButton.style.cssText = 'padding:5px 10px;min-height:32px;';
-            deleteButton.textContent = '刪除帳號';
-            deleteButton.addEventListener('click', () => deleteManagedAccount(user.uid, user.email));
-            actions.append(toggleButton, deleteButton);
-            row.append(label, actions);
-            list.appendChild(row);
-        });
+        renderManagedAccountList(users);
     } catch (error) {
         console.error('Managed account list error:', error);
-        showAccountManagementError('帳號與白名單讀取失敗，請確認 App Check 與 Cloud Functions 已部署。');
+        showAccountManagementError('帳號與權限讀取失敗，請確認 App Check 與 Cloud Functions 已部署。');
     }
 }
 
@@ -860,7 +913,7 @@ async function deleteManagedAccount(uid, email) {
     try {
         await callDocumentFunction('documentManagementDeleteUser', { uid });
         await loadManagedAccounts(true);
-        showToast('帳號與白名單已刪除');
+        showToast('帳號與系統權限已刪除');
     } catch (error) {
         console.error('Delete account error:', error);
         alert('帳號刪除失敗。');
@@ -887,24 +940,24 @@ async function addAccessUser() {
         });
         input.value = '';
         await loadManagedAccounts(true);
-        showToast(`已加入 ${employeeId}`);
+        showToast(`已開通 ${employeeId} 的系統權限`);
     } catch (error) {
         console.error('Add access error:', error);
-        alert('加入白名單失敗，請確認該帳號已存在且管理員權限有效。');
+        alert('加入系統權限失敗，請確認該帳號已存在且管理員權限有效。');
     }
 }
 
 async function removeAccessUser(email) {
     if (!isAdmin()) return;
-    if (!confirm(`確定移除 ${email} 的發文系統權限？`)) return;
+    if (!confirm(`確定移除 ${email} 的發文系統權限？帳號本身不會刪除。`)) return;
     try {
         const { db, doc, deleteDoc } = window.firebaseAPI;
         await deleteDoc(doc(db, 'document_management_access', String(email)));
         await loadManagedAccounts(true);
-        showToast('已移除白名單');
+        showToast('已移除發文系統權限');
     } catch (error) {
         console.error('Remove access error:', error);
-        alert('移除白名單失敗。');
+        alert('移除系統權限失敗。');
     }
 }
 
