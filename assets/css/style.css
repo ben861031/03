@@ -1486,6 +1486,104 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   }
 }
 
+/* v2.1.6 手機資訊區：四張獨立小卡整合為單一 2×2 資訊面板。 */
+@media (max-width: 768px) {
+  td[data-label="計畫編號"],
+  td[data-label="承辦人"],
+  td[data-label="應發文日"],
+  td[data-label="顯示發文"] {
+    width: calc(50% - 17px) !important;
+    min-height: 82px;
+    margin: 0;
+    padding: 14px 16px !important;
+    gap: 6px;
+    border: 0;
+    border-radius: 0;
+    background: #f8fafc;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  td[data-label="計畫編號"],
+  td[data-label="承辦人"] {
+    margin-top: 14px;
+    border-top: 1px solid #e5eaf0;
+    border-bottom: 1px solid #e5eaf0;
+  }
+
+  td[data-label="計畫編號"],
+  td[data-label="應發文日"] {
+    margin-left: 17px;
+    border-left: 1px solid #e5eaf0;
+    border-right: 1px solid #e5eaf0;
+  }
+
+  td[data-label="承辦人"],
+  td[data-label="顯示發文"] {
+    margin-right: 17px;
+    border-right: 1px solid #e5eaf0;
+  }
+
+  td[data-label="應發文日"],
+  td[data-label="顯示發文"] {
+    margin-top: 0;
+    margin-bottom: 2px;
+    border-bottom: 1px solid #e5eaf0;
+  }
+
+  td[data-label="計畫編號"] {
+    border-radius: 15px 0 0 0;
+  }
+
+  td[data-label="承辦人"] {
+    border-radius: 0 15px 0 0;
+  }
+
+  td[data-label="應發文日"] {
+    border-radius: 0 0 0 15px;
+  }
+
+  td[data-label="顯示發文"] {
+    border-radius: 0 0 15px 0;
+  }
+
+  td[data-label="計畫編號"]::before { content: "計畫編號"; }
+  td[data-label="承辦人"]::before { content: "承辦人"; }
+  td[data-label="應發文日"]::before { content: "發文日期"; }
+  td[data-label="顯示發文"]::before { content: "顯示日期"; }
+
+  td[data-label="計畫編號"]::before,
+  td[data-label="承辦人"]::before,
+  td[data-label="應發文日"]::before,
+  td[data-label="顯示發文"]::before {
+    font-size: 11px;
+    line-height: 1.2;
+    color: #8a96a8;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  td[data-label="計畫編號"] span.val,
+  td[data-label="承辦人"] span.val,
+  td[data-label="應發文日"] .pill,
+  td[data-label="顯示發文"] .pill {
+    color: #273449;
+    font-size: 15px;
+    line-height: 1.4;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  td[data-label="應發文日"] .pill,
+  td[data-label="顯示發文"] .pill {
+    min-width: 0 !important;
+    padding: 0 !important;
+    text-align: left;
+    font-size: 15px !important;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
 /* Fullscreen Loader */
 .fullscreen-loader {
   position: fixed;

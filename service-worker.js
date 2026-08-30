@@ -4,7 +4,7 @@
  * App Check、Cloud Functions 或任何跨網域請求。
  * 發布新版時請同步遞增 CACHE_NAME。
  */
-const CACHE_NAME = 'dispatch-pwa-v2.1.5-white-mobile';
+const CACHE_NAME = 'dispatch-pwa-v2.1.6-info-panel';
 const CACHE_PREFIX = 'dispatch-pwa-';
 const SHELL_FILES = [
   './index.html',
