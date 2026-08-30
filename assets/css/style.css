@@ -1822,6 +1822,14 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
     background-image: none;
   }
 
+  /* v2.1.9：明確覆蓋桌機偶數列與觸控 hover 的透明背景，四格固定同色。 */
+  tbody tr td[data-label="計畫編號"],
+  tbody tr td[data-label="承辦人"],
+  tbody tr td[data-label="應發文日"],
+  tbody tr td[data-label="顯示發文"] {
+    background-color: #f6f8fb;
+  }
+
   td[data-label="計畫編號"],
   td[data-label="承辦人"] {
     border-top: 0;
