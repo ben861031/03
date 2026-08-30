@@ -1584,6 +1584,77 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   }
 }
 
+/* v2.1.7 柔和資訊面板：移除表格外框與中央直線，降低視覺重量。 */
+@media (max-width: 768px) {
+  td[data-label="計畫編號"],
+  td[data-label="承辦人"],
+  td[data-label="應發文日"],
+  td[data-label="顯示發文"] {
+    min-height: 70px;
+    padding: 11px 16px !important;
+    gap: 4px;
+    border: 0;
+    background-color: #f6f8fb;
+    background-image: none;
+  }
+
+  td[data-label="計畫編號"],
+  td[data-label="承辦人"] {
+    border-top: 0;
+    border-bottom: 0;
+  }
+
+  td[data-label="計畫編號"] {
+    border-radius: 16px 0 0 0;
+    background-image: linear-gradient(to right, transparent 0, #e6ebf2 16px, #e6ebf2 100%);
+    background-repeat: no-repeat;
+    background-position: left bottom;
+    background-size: 100% 1px;
+  }
+
+  td[data-label="承辦人"] {
+    border-radius: 0 16px 0 0;
+    background-image: linear-gradient(to right, #e6ebf2 0, #e6ebf2 calc(100% - 16px), transparent 100%);
+    background-repeat: no-repeat;
+    background-position: left bottom;
+    background-size: 100% 1px;
+  }
+
+  td[data-label="應發文日"] {
+    border-radius: 0 0 0 16px;
+    border-bottom: 0;
+  }
+
+  td[data-label="顯示發文"] {
+    border-radius: 0 0 16px 0;
+    border-bottom: 0;
+  }
+
+  td[data-label="計畫編號"]::before,
+  td[data-label="承辦人"]::before,
+  td[data-label="應發文日"]::before,
+  td[data-label="顯示發文"]::before {
+    color: #8b97a8;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.035em;
+  }
+
+  td[data-label="計畫編號"] span.val,
+  td[data-label="承辦人"] span.val,
+  td[data-label="應發文日"] .pill,
+  td[data-label="顯示發文"] .pill {
+    color: #253247;
+    font-size: 15px !important;
+    line-height: 1.35;
+    font-weight: 700;
+  }
+
+  td[data-label="備註"] {
+    padding-top: 15px;
+  }
+}
+
 /* Fullscreen Loader */
 .fullscreen-loader {
   position: fixed;
