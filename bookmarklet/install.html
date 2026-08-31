@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>總發公文自動匯入書籤</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif; color:#152238; background:#eef3f9; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; padding:24px; }
+    main { width:min(720px,100%); background:#fff; border:1px solid #dce5f0; border-radius:24px; box-shadow:0 18px 48px rgba(31,51,78,.12); padding:clamp(24px,5vw,44px); }
+    .eyebrow { color:#2879e8; font-weight:800; letter-spacing:.08em; font-size:13px; }
+    h1 { margin:8px 0 12px; font-size:clamp(26px,5vw,38px); }
+    p,li { color:#546277; line-height:1.75; }
+    ol { padding-left:1.4em; }
+    .bookmark { display:flex; justify-content:center; align-items:center; min-height:64px; margin:24px 0 12px; border-radius:16px; color:#fff; background:linear-gradient(135deg,#315bea,#2879e8); text-decoration:none; font-size:18px; font-weight:800; box-shadow:0 10px 24px rgba(40,121,232,.25); }
+    .bookmark:hover { filter:brightness(1.04); }
+    .hint { text-align:center; font-size:13px; }
+    button { width:100%; min-height:48px; border:1px solid #bfd0e4; border-radius:14px; color:#24405f; background:#f8fbff; font:inherit; font-weight:700; cursor:pointer; }
+    textarea { width:100%; min-height:110px; margin-top:12px; padding:12px; border:1px solid #d5dfeb; border-radius:12px; color:#66758a; background:#f8fafc; resize:vertical; }
+    .status { min-height:24px; margin:10px 0 0; color:#14845c; font-weight:700; text-align:center; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">電子表單－總發公文自動匯入</div>
+    <h1>固定重用同一個系統分頁</h1>
+    <p>請先刪除舊版書籤，再將下方藍色按鈕拖曳到 Chrome 書籤列。新版保留原本「總發」擷取規則，並讓系統與書籤使用同一個固定分頁名稱。</p>
+    <a id="bookmarkLink" class="bookmark" href="#">發文批次匯入（固定分頁）</a>
+    <p class="hint">電腦版：直接拖曳上方按鈕至書籤列。若無法拖曳，請使用下方複製方式。</p>
+    <ol>
+      <li>開啟電子表單的「線上簽核」，確認頁面出現「總發」資料。</li>
+      <li>點選新書籤；若 Chrome 能辨識既有的固定分頁就會重用，否則才建立新分頁。重用時畫面可能短暫重新載入。</li>
+      <li>若尚未登入，資料會先由系統保留，登入完成後自動匯入。</li>
+    </ol>
+    <button id="copyButton" type="button">複製書籤 JavaScript</button>
+    <textarea id="bookmarkCode" readonly aria-label="書籤 JavaScript"></textarea>
+    <div id="copyStatus" class="status" aria-live="polite"></div>
+  </main>
+  <script src="install.js"></script>
+</body>
+</html>

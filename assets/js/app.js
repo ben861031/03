@@ -1,3 +1,12 @@
+const AUTO_IMPORT_TARGET_NAME = 'dispatchManagementImportTargetV1';
+
+function claimAutoImportWindowName() {
+    try { window.name = AUTO_IMPORT_TARGET_NAME; } catch (error) {}
+}
+
+claimAutoImportWindowName();
+window.addEventListener('pageshow', claimAutoImportWindowName);
+
 const AppTemplate = `
 <div class="sidebar">
 <div class="logo collapsed-logo">
@@ -531,6 +540,7 @@ async function retryCurrentSession({ automatic = false } = {}) {
         hideConnectionIssue();
         setStartupLoader(true, '重新載入公文資料中...');
         await initFirebaseSync();
+        await flushQueuedAutoImports();
     } catch (error) {
         console.warn('Session recovery failed:', error);
         if (isTerminalAuthError(error)) {
@@ -744,6 +754,7 @@ async function initApp() {
                 fsLoader.classList.remove('hidden');
             }
             await initFirebaseSync();
+            await flushQueuedAutoImports();
         } catch (error) {
             console.error('Role verification error:', error);
             if (isTerminalAuthError(error)) {
@@ -3790,43 +3801,115 @@ if (window.firebaseAPI) {
 }
 
 let pendingImportJSON = null;
+let autoImportInProgress = false;
+const queuedAutoImports = [];
+const acceptedAutoImportRequestIds = new Set();
 const AUTO_IMPORT_ALLOWED_ORIGINS = new Set([
     location.origin,
     'https://web.sinotech-eng.com',
     'http://iiseng.sinotech-eng.com',
     'https://iiseng.sinotech-eng.com'
 ]);
-
-// --- 接收來自書籤小工具的跨網域資料 (自動匯入功能) ---
-window.addEventListener('message', (event) => {
-    if (!AUTO_IMPORT_ALLOWED_ORIGINS.has(event.origin) || !event.source) return;
-    if (event.data && event.data.type === 'AUTO_BATCH_IMPORT') {
-        const textData = event.data.payload;
-        if (typeof textData !== 'string' || textData.length > 1_000_000) {
-            console.warn('Rejected invalid auto-import payload.');
-            return;
-        }
-        if (event.data.json) {
-            if (!Array.isArray(event.data.json) || event.data.json.length > 5000) {
-                console.warn('Rejected invalid auto-import JSON.');
-                return;
-            }
-            pendingImportJSON = event.data.json;
-        } else {
-            pendingImportJSON = null;
-        }
-        
-        // 1. 開啟匯入視窗
-        document.getElementById('importModal').classList.remove('hidden');
-        
-        // 2. 只保留文字與受信任業務連結，不接受事件屬性、script 或任意 HTML。
-        setSafeImportHTML(textData);
-        
-        // 3. 自動觸發「確認匯入」，稍微延遲讓畫面更新
-        setTimeout(() => {
-            confirmImport();
-        }, 100);
+function sendAutoImportAck(source, origin, requestId, status, message = '') {
+    if (!source || !requestId) return;
+    try {
+        source.postMessage({
+            type: 'AUTO_BATCH_IMPORT_ACK',
+            requestId,
+            status,
+            message
+        }, origin);
+    } catch (error) {
+        console.warn('Unable to acknowledge auto-import request:', error);
     }
+}
+
+function autoImportReady() {
+    return Boolean(currentUserRole && document.getElementById('importModal'));
+}
+
+async function processAutoImportRequest(request) {
+    if (autoImportInProgress || !autoImportReady()) return false;
+    autoImportInProgress = true;
+    try {
+        pendingImportJSON = request.json || null;
+        openImport();
+        setSafeImportHTML(request.payload);
+        try { window.focus(); } catch (error) {}
+        sendAutoImportAck(request.source, request.origin, request.requestId, 'processed');
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await confirmImport();
+        return true;
+    } catch (error) {
+        console.error('Auto-import processing failed:', error);
+        sendAutoImportAck(request.source, request.origin, request.requestId, 'error', '匯入處理失敗');
+        return false;
+    } finally {
+        autoImportInProgress = false;
+    }
+}
+
+async function flushQueuedAutoImports() {
+    if (!autoImportReady() || autoImportInProgress) return;
+    while (queuedAutoImports.length && autoImportReady()) {
+        const request = queuedAutoImports.shift();
+        await processAutoImportRequest(request);
+    }
+}
+
+// --- 接收來自書籤小工具的跨網域資料（固定分頁、確認回覆及登入後續傳） ---
+window.addEventListener('message', async (event) => {
+    if (!AUTO_IMPORT_ALLOWED_ORIGINS.has(event.origin) || !event.source) return;
+    if (!event.data || event.data.type !== 'AUTO_BATCH_IMPORT') return;
+
+    const requestId = typeof event.data.requestId === 'string' && event.data.requestId.length <= 100
+        ? event.data.requestId
+        : `legacy-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const navigationToken = typeof event.data.navigationToken === 'string'
+        ? event.data.navigationToken
+        : '';
+    if (navigationToken) {
+        const activeToken = new URLSearchParams(location.hash.slice(1)).get('auto-import') || '';
+        // 具名分頁重新導向完成前，舊頁面也可能短暫收到訊息；不得提早回覆，否則資料會隨舊頁面卸載而遺失。
+        if (activeToken !== navigationToken) return;
+    }
+    const textData = event.data.payload;
+
+    if (typeof textData !== 'string' || !textData.trim() || textData.length > 1_000_000) {
+        console.warn('Rejected invalid auto-import payload.');
+        sendAutoImportAck(event.source, event.origin, requestId, 'error', '匯入內容為空或超過大小上限');
+        return;
+    }
+    if (event.data.json && (!Array.isArray(event.data.json) || event.data.json.length > 5000)) {
+        console.warn('Rejected invalid auto-import JSON.');
+        sendAutoImportAck(event.source, event.origin, requestId, 'error', '匯入筆數或資料格式不符');
+        return;
+    }
+    if (acceptedAutoImportRequestIds.has(requestId)) {
+        sendAutoImportAck(event.source, event.origin, requestId, 'duplicate');
+        return;
+    }
+
+    const request = {
+        requestId,
+        payload: textData,
+        json: event.data.json || null,
+        source: event.source,
+        origin: event.origin
+    };
+    acceptedAutoImportRequestIds.add(requestId);
+    if (navigationToken) {
+        try { history.replaceState(null, '', `${location.pathname}${location.search}`); } catch (error) {}
+    }
+
+    if (!autoImportReady() || autoImportInProgress) {
+        queuedAutoImports.push(request);
+        sendAutoImportAck(event.source, event.origin, requestId, 'queued', '已接收，登入完成後自動匯入');
+        return;
+    }
+
+    await processAutoImportRequest(request);
+    await flushQueuedAutoImports();
 });
 
 

@@ -496,12 +496,23 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   display: flex;
   align-items: center;
   gap: 9px;
-  margin: -6px 2px 6px;
+  width: 100%;
+  margin: -6px 2px 18px;
   color: #334155;
   font-size: 14px;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
+}
+.remember-login-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 4px;
+  row-gap: 2px;
+}
+.remember-login-copy > span {
+  white-space: nowrap;
 }
 .remember-login-row input {
   width: 18px;
@@ -509,12 +520,10 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   margin: 0;
   accent-color: #4f46e5;
 }
-.remember-login-note {
-  margin: 0 2px 18px;
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.55;
-  text-align: left;
+.remember-login-warning {
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 600;
 }
 .connection-screen {
   z-index: 10002;
@@ -1895,7 +1904,7 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
     border-bottom: 0;
   }
 
-  td[data-label="計畫編號"] {
+  tbody tr td[data-label="計畫編號"] {
     border-radius: 16px 0 0 0;
     background-image: linear-gradient(to right, transparent 0, #e6ebf2 16px, #e6ebf2 100%);
     background-repeat: no-repeat;
@@ -1903,7 +1912,7 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
     background-size: 100% 1px;
   }
 
-  td[data-label="承辦人"] {
+  tbody tr td[data-label="承辦人"] {
     border-radius: 0 16px 0 0;
     background-image: linear-gradient(to right, #e6ebf2 0, #e6ebf2 calc(100% - 16px), transparent 100%);
     background-repeat: no-repeat;
