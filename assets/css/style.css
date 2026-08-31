@@ -492,6 +492,65 @@ td:nth-child(3) a{display:block;line-height:1.7;word-break:break-word}
   gap: 16px;
   margin-bottom: 24px;
 }
+.remember-login-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: -6px 2px 6px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.remember-login-row input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #4f46e5;
+}
+.remember-login-note {
+  margin: 0 2px 18px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.55;
+  text-align: left;
+}
+.connection-screen {
+  z-index: 10002;
+}
+.connection-box {
+  max-width: 420px !important;
+}
+.connection-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 18px;
+  border-radius: 18px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 32px;
+  font-weight: 700;
+}
+.connection-message {
+  margin: -8px 0 22px;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.connection-logout-btn {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 10px;
+  border-color: #cbd5e1;
+  background: #fff;
+  color: #475569;
+}
+.connection-logout-btn:hover {
+  background: #f8fafc;
+}
 .pill-input {
   width: 100%;
   padding: 14px 20px;

@@ -25,6 +25,7 @@ import {
   onAuthStateChanged,
   setPersistence,
   browserSessionPersistence,
+  browserLocalPersistence,
   getIdTokenResult
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
@@ -60,8 +61,12 @@ if (appCheckKey) {
   console.warn('Firebase App Check is not configured; account-management functions will reject production calls.');
 }
 
-// 登入狀態只保留在目前分頁工作階段，不保存使用者密碼。
-await setPersistence(auth, browserSessionPersistence);
+// 使用者可自行選擇是否在受信任裝置跨分頁保存登入；永不保存帳號或密碼。
+const rememberLogin = (() => {
+  try { return localStorage.getItem('dispatch_remember_login') === '1'; }
+  catch (error) { return false; }
+})();
+await setPersistence(auth, rememberLogin ? browserLocalPersistence : browserSessionPersistence);
 
 window.firebaseAPI = {
   db,
@@ -70,6 +75,9 @@ window.firebaseAPI = {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  setPersistence,
+  browserSessionPersistence,
+  browserLocalPersistence,
   getIdTokenResult,
   httpsCallable,
   collection,

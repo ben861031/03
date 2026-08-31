@@ -383,6 +383,11 @@ let currentUserRole = null;
 let activeSessionUid = null;
 let syncUnsubscribe = null;
 let accountManagementCache = { users: [], fetchedAt: 0 };
+const AUTH_PERSISTENCE_KEY = 'dispatch_remember_login';
+const AUTO_SESSION_RETRY_DELAYS = [2000, 5000, 15000];
+let sessionRetryTimer = null;
+let sessionRetryAttempt = 0;
+let sessionRetryInProgress = false;
 
 const SENSITIVE_STORAGE_KEYS = [
     'syncAccount',
@@ -399,6 +404,151 @@ function clearSensitiveBrowserStorage() {
         try { localStorage.removeItem(key); } catch(e) {}
         try { sessionStorage.removeItem(key); } catch(e) {}
     });
+}
+
+function rememberLoginEnabled() {
+    try { return localStorage.getItem(AUTH_PERSISTENCE_KEY) === '1'; }
+    catch (error) { return false; }
+}
+
+function saveRememberLogin(enabled) {
+    try {
+        if (enabled) localStorage.setItem(AUTH_PERSISTENCE_KEY, '1');
+        else localStorage.removeItem(AUTH_PERSISTENCE_KEY);
+    } catch (error) {}
+}
+
+function clearSessionRetryTimer() {
+    if (sessionRetryTimer) clearTimeout(sessionRetryTimer);
+    sessionRetryTimer = null;
+}
+
+function showConnectionIssue(message = '登入仍保留，系統正在重新驗證連線。') {
+    setStartupLoader(false);
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) loginModal.classList.add('hidden');
+    const messageEl = document.getElementById('connectionMessage');
+    if (messageEl) messageEl.textContent = message;
+    const modal = document.getElementById('connectionModal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function hideConnectionIssue() {
+    const modal = document.getElementById('connectionModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function isTerminalAuthError(error) {
+    const code = String(error?.code || '').toLowerCase();
+    return [
+        'auth/user-disabled',
+        'auth/user-not-found',
+        'auth/id-token-revoked',
+        'auth/user-token-expired',
+        'auth/invalid-user-token'
+    ].includes(code);
+}
+
+async function endSessionForAccessFailure(message) {
+    clearSessionRetryTimer();
+    sessionRetryAttempt = 0;
+    saveRememberLogin(false);
+    activeSessionUid = null;
+    currentUserRole = null;
+    isFirebaseError = true;
+    docs = [];
+    doneDocs = [];
+    if (typeof syncUnsubscribe === 'function') syncUnsubscribe();
+    syncUnsubscribe = null;
+    clearSensitiveBrowserStorage();
+    try {
+        const { auth, signOut } = window.firebaseAPI;
+        await signOut(auth);
+    } catch (error) {}
+    hideConnectionIssue();
+    setStartupLoader(false);
+    const errorEl = document.getElementById('loginError');
+    if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+    }
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) loginModal.classList.remove('hidden');
+}
+
+function scheduleSessionRetry() {
+    if (sessionRetryTimer || sessionRetryAttempt >= AUTO_SESSION_RETRY_DELAYS.length) return;
+    const delay = AUTO_SESSION_RETRY_DELAYS[sessionRetryAttempt];
+    sessionRetryAttempt += 1;
+    sessionRetryTimer = setTimeout(() => {
+        sessionRetryTimer = null;
+        retryCurrentSession({ automatic: true });
+    }, delay);
+}
+
+async function retryCurrentSession({ automatic = false } = {}) {
+    if (sessionRetryInProgress) return;
+    clearSessionRetryTimer();
+    if (!automatic) sessionRetryAttempt = 0;
+
+    const { auth } = window.firebaseAPI || {};
+    const user = auth?.currentUser;
+    if (!user) {
+        hideConnectionIssue();
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) loginModal.classList.remove('hidden');
+        return;
+    }
+
+    sessionRetryInProgress = true;
+    const retryButton = document.getElementById('retrySessionBtn');
+    if (retryButton) {
+        retryButton.disabled = true;
+        retryButton.textContent = '重新連線中…';
+    }
+
+    try {
+        await user.getIdToken(true);
+        const role = await resolveDocumentRole(user);
+        if (role === 'password_change_required') {
+            sessionRetryAttempt = 0;
+            hideConnectionIssue();
+            document.getElementById('changePasswordModal').classList.remove('hidden');
+            return;
+        }
+        if (!role) {
+            await endSessionForAccessFailure('此帳號的發文系統權限已移除，請聯絡系統管理員');
+            return;
+        }
+
+        currentUserRole = role;
+        activeSessionUid = user.uid;
+        isFirebaseError = false;
+        sessionRetryAttempt = 0;
+        if (!document.getElementById('sidebar')) renderAppShell();
+        applyRoleToUI();
+        document.getElementById('loginModal').classList.add('hidden');
+        hideConnectionIssue();
+        setStartupLoader(true, '重新載入公文資料中...');
+        await initFirebaseSync();
+    } catch (error) {
+        console.warn('Session recovery failed:', error);
+        if (isTerminalAuthError(error)) {
+            await endSessionForAccessFailure('登入狀態已失效，請重新登入');
+            return;
+        }
+        const remaining = AUTO_SESSION_RETRY_DELAYS.length - sessionRetryAttempt;
+        showConnectionIssue(remaining > 0
+            ? `登入仍保留，連線驗證暫時失敗；系統將自動重試（剩餘 ${remaining} 次）。`
+            : '登入仍保留，但目前無法連線。請確認網路後點「立即重新連線」。');
+        scheduleSessionRetry();
+    } finally {
+        sessionRetryInProgress = false;
+        if (retryButton) {
+            retryButton.disabled = false;
+            retryButton.textContent = '立即重新連線';
+        }
+    }
 }
 
 function isAdmin() {
@@ -510,27 +660,11 @@ async function initFirebaseSync() {
         if (fsLoader) fsLoader.classList.add('hidden');
     }, async (error) => {
         console.error("Firebase sync error:", error);
-        if (error && (error.code === 'permission-denied' || (error.message && error.message.includes('permission')))) {
-            isFirebaseError = true;
-            currentUserRole = null;
-            activeSessionUid = null;
-            docs = [];
-            doneDocs = [];
-            clearSensitiveBrowserStorage();
-            try {
-                const { auth, signOut } = window.firebaseAPI;
-                await signOut(auth);
-            } catch(e) {}
-            const fsLoader = document.getElementById('fullScreenLoader');
-            if (fsLoader) fsLoader.classList.add('hidden');
-            const loginErr = document.getElementById('loginError');
-            if (loginErr) {
-                loginErr.innerText = "雲端連線權限已過期，請重新登入！";
-                loginErr.classList.remove('hidden');
-            }
-            const loginModal = document.getElementById('loginModal');
-            if (loginModal) loginModal.classList.remove('hidden');
-        }
+        isFirebaseError = true;
+        if (typeof syncUnsubscribe === 'function') syncUnsubscribe();
+        syncUnsubscribe = null;
+        showConnectionIssue('登入仍保留，雲端連線或權限驗證暫時失敗；系統正在重新連線。');
+        scheduleSessionRetry();
     });
 }
 
@@ -554,13 +688,27 @@ let isFirebaseError = false;
 
 async function initApp() {
     clearSensitiveBrowserStorage();
-    const { auth, signInWithEmailAndPassword, onAuthStateChanged, signOut } = window.firebaseAPI;
+    const {
+        auth,
+        signInWithEmailAndPassword,
+        onAuthStateChanged,
+        setPersistence,
+        browserSessionPersistence,
+        browserLocalPersistence
+    } = window.firebaseAPI;
+    const rememberInput = document.getElementById('rememberLogin');
+    if (rememberInput) rememberInput.checked = rememberLoginEnabled();
+    document.getElementById('retrySessionBtn')?.addEventListener('click', () => retryCurrentSession());
+    document.getElementById('connectionLogoutBtn')?.addEventListener('click', logout);
     setStartupLoader(true);
 
     onAuthStateChanged(auth, async user => {
         if (!user) {
+            clearSessionRetryTimer();
+            sessionRetryAttempt = 0;
             activeSessionUid = null;
             currentUserRole = null;
+            hideConnectionIssue();
             setStartupLoader(false);
             document.getElementById('loginModal').classList.remove('hidden');
             return;
@@ -577,16 +725,15 @@ async function initApp() {
                 return;
             }
             if (!role) {
-                setStartupLoader(false);
-                document.getElementById('loginError').innerText = '此帳號尚未取得發文系統權限，請聯絡系統管理員';
-                document.getElementById('loginError').classList.remove('hidden');
-                await signOut(auth);
+                await endSessionForAccessFailure('此帳號尚未取得發文系統權限，請聯絡系統管理員');
                 return;
             }
 
             currentUserRole = role;
             activeSessionUid = user.uid;
             isFirebaseError = false;
+            sessionRetryAttempt = 0;
+            hideConnectionIssue();
             renderAppShell();
             applyRoleToUI();
             document.getElementById('loginModal').classList.add('hidden');
@@ -599,10 +746,12 @@ async function initApp() {
             await initFirebaseSync();
         } catch (error) {
             console.error('Role verification error:', error);
-            setStartupLoader(false);
-            document.getElementById('loginError').innerText = '無法驗證系統權限，請稍後再試';
-            document.getElementById('loginError').classList.remove('hidden');
-            await signOut(auth);
+            if (isTerminalAuthError(error)) {
+                await endSessionForAccessFailure('登入狀態已失效，請重新登入');
+                return;
+            }
+            showConnectionIssue('登入仍保留，但目前無法驗證系統權限；系統正在重新連線。');
+            scheduleSessionRetry();
         }
     });
     
@@ -620,18 +769,22 @@ async function initApp() {
         document.getElementById('loginError').classList.add('hidden');
         
         try {
-            const { auth, signInWithEmailAndPassword } = window.firebaseAPI;
-            
+            const remember = document.getElementById('rememberLogin')?.checked === true;
+            await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+
             // 將員工編號轉換為虛擬 Email 格式供 Firebase 認證使用
             const virtualEmail = `${accInput}@sinotech.com`;
-            
             await signInWithEmailAndPassword(auth, virtualEmail, pwdInput);
-            
-            // Firebase 僅保存工作階段，不在 Web Storage 留存帳號或密碼。
+            saveRememberLogin(remember);
+
+            // 只保存登入模式，不在 Web Storage 留存員工編號或密碼。
             document.getElementById('loginPassword').value = '';
         } catch (error) {
             console.error("Login verification error:", error);
-            document.getElementById('loginError').innerText = "帳號不存在或密碼錯誤";
+            const code = String(error?.code || '');
+            document.getElementById('loginError').innerText = code === 'auth/network-request-failed'
+                ? '網路連線失敗，請確認連線後再試'
+                : '帳號不存在或密碼錯誤';
             document.getElementById('loginError').classList.remove('hidden');
         } finally {
             document.getElementById('loginBtn').innerText = "登入";
@@ -645,6 +798,9 @@ async function logout() {
         syncUnsubscribe = null;
     }
     clearSensitiveBrowserStorage();
+    saveRememberLogin(false);
+    clearSessionRetryTimer();
+    sessionRetryAttempt = 0;
     try {
         const { auth, signOut } = window.firebaseAPI;
         await signOut(auth);

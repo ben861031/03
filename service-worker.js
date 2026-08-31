@@ -4,7 +4,7 @@
  * App Check、Cloud Functions 或任何跨網域請求。
  * 發布新版時請同步遞增 CACHE_NAME。
  */
-const CACHE_NAME = 'dispatch-pwa-v2.1.9-mobile-meta-bg';
+const CACHE_NAME = 'dispatch-pwa-v2.1.10-session-recovery';
 const CACHE_PREFIX = 'dispatch-pwa-';
 const SHELL_FILES = [
   './index.html',

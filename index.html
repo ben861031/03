@@ -57,9 +57,25 @@
       <input type="text" id="loginAccount" class="pill-input" placeholder="員工編號">
       <input type="password" id="loginPassword" class="pill-input" placeholder="密碼">
     </div>
+    <label class="remember-login-row" for="rememberLogin">
+      <input type="checkbox" id="rememberLogin">
+      <span>在這台裝置保持登入</span>
+    </label>
+    <div class="remember-login-note">僅限個人使用的裝置；共用電腦請勿勾選。</div>
     
     <div id="loginError" class="login-error hidden">帳號或密碼錯誤</div>
     <button id="loginBtn" class="btn pill-btn">登入</button>
+  </div>
+</div>
+
+<!-- Temporary connection/auth verification recovery -->
+<div id="connectionModal" class="login-screen connection-screen hidden">
+  <div class="login-box clean-style connection-box" role="alertdialog" aria-modal="true" aria-labelledby="connectionTitle">
+    <div class="connection-icon" aria-hidden="true">↻</div>
+    <div id="connectionTitle" class="login-title">連線暫時中斷</div>
+    <p id="connectionMessage" class="connection-message">登入仍保留，系統正在重新驗證連線。</p>
+    <button id="retrySessionBtn" class="btn pill-btn" type="button">立即重新連線</button>
+    <button id="connectionLogoutBtn" class="btn connection-logout-btn" type="button">登出系統</button>
   </div>
 </div>
 
