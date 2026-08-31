@@ -2,7 +2,7 @@ function dispatchImportBookmarklet() {
     try {
         const APP_URL = 'https://ben861031.github.io/03/';
         const APP_ORIGIN = 'https://ben861031.github.io';
-        const TARGET_NAME = 'dispatchManagementImportTargetV1';
+        const TARGET_NAME = 'AutoImportApp';
         const visible = element => element && element.offsetParent !== null;
         const all = [...document.querySelectorAll('body *')];
         const title = all.find(element => visible(element)
@@ -86,7 +86,8 @@ function dispatchImportBookmarklet() {
             }
 
             const clone = row.cloneNode(true);
-            clone.querySelectorAll('input, button, script, style').forEach(element => element.remove());
+            // 保持既有書籤的複製結果：只移除勾選框與操作按鈕，其餘列內容照原頁複製。
+            clone.querySelectorAll('input, button').forEach(element => element.remove());
             clone.style.display = 'flex';
             clone.style.alignItems = 'center';
             clone.style.borderBottom = '1px dashed #ccc';
@@ -124,16 +125,30 @@ function dispatchImportBookmarklet() {
         const requestId = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
             ? crypto.randomUUID()
             : `import-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        const navigationToken = requestId;
-        const targetUrl = `${APP_URL}#auto-import=${encodeURIComponent(navigationToken)}`;
-        const target = window.open(targetUrl, TARGET_NAME);
+        const target = window.open('', TARGET_NAME);
         if (!target) {
             alert('瀏覽器阻擋了彈出視窗，請允許此網站開啟彈出式視窗。');
             return;
         }
         target.focus();
 
-        const message = { type: 'AUTO_BATCH_IMPORT', requestId, navigationToken, payload: finalHtmlData, json: parsedItems };
+        let navigationToken = '';
+        let message = { type: 'AUTO_BATCH_IMPORT', requestId, navigationToken, payload: finalHtmlData, json: parsedItems };
+        let didNavigate = false;
+        const navigateToApp = () => {
+            if (didNavigate) return;
+            didNavigate = true;
+            navigationToken = requestId;
+            message = { type: 'AUTO_BATCH_IMPORT', requestId, navigationToken, payload: finalHtmlData, json: parsedItems };
+            target.location.replace(`${APP_URL}#auto-import=${encodeURIComponent(navigationToken)}`);
+        };
+        try {
+            // 新開的具名分頁仍是同來源 about:blank；既有管理平台為跨來源，讀取 location 會被瀏覽器阻擋。
+            if (!target.location.href || target.location.href === 'about:blank') navigateToApp();
+        } catch (error) {
+            // 已有管理平台時先直接傳送，不重新載入，保留登入狀態與記憶體歷史資料。
+        }
+
         let attempts = 0;
         let timer = null;
         const cleanup = () => {
@@ -150,6 +165,8 @@ function dispatchImportBookmarklet() {
         const send = () => {
             attempts += 1;
             try { target.postMessage(message, APP_ORIGIN); } catch (error) {}
+            // 既有具名分頁若不是可回應的管理平台，2 秒後才重新導向作為復原機制。
+            if (attempts === 5 && !didNavigate) navigateToApp();
             if (attempts >= 60) {
                 cleanup();
                 alert('發文系統在 30 秒內未回應，請確認系統分頁已正常開啟後再試一次。');
@@ -157,8 +174,8 @@ function dispatchImportBookmarklet() {
         };
 
         window.addEventListener('message', receiveAck);
-        send();
         timer = setInterval(send, 500);
+        send();
     } catch (error) {
         alert(`程式錯誤：${error.message}`);
     }

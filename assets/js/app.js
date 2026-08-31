@@ -1,4 +1,5 @@
-const AUTO_IMPORT_TARGET_NAME = 'dispatchManagementImportTargetV1';
+// 延續既有書籤使用的名稱，讓舊版與新版書籤都能尋找同一個管理平台分頁。
+const AUTO_IMPORT_TARGET_NAME = 'AutoImportApp';
 
 function claimAutoImportWindowName() {
     try { window.name = AUTO_IMPORT_TARGET_NAME; } catch (error) {}
