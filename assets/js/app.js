@@ -1701,6 +1701,60 @@ function getDocByNo(docNo) {
     return docs.find(d => String(d.docNo) === String(docNo)) || doneDocs.find(d => String(d.docNo) === String(docNo));
 }
 
+/**
+ * 智慧匯入只比對本次匯入的公文編號，不預先載入整批已發文歷史。
+ * Firestore 的 in 查詢每批最多 30 個值；任何一批失敗都回傳 false，
+ * 由呼叫端中止匯入，避免把無法確認的既有公文誤判為新公文。
+ */
+async function loadImportedDocMatches(rawDocNos) {
+    if (!window.firebaseAPI) return false;
+
+    const uniqueDocNos = [...new Set(
+        (Array.isArray(rawDocNos) ? rawDocNos : [])
+            .map(normalizeDocNo)
+            .filter(Boolean)
+    )];
+    const missingDocNos = uniqueDocNos.filter(docNo => !getDocByNo(docNo));
+    if (!missingDocNos.length) return true;
+
+    const { db, collection, query, where, documentId, getDocs } = window.firebaseAPI;
+    if (!db || !collection || !query || !where || !documentId || !getDocs) {
+        console.error('Targeted import lookup is unavailable: incomplete Firebase API.');
+        return false;
+    }
+
+    try {
+        const chunkSize = 30;
+        for (let offset = 0; offset < missingDocNos.length; offset += chunkSize) {
+            const chunk = missingDocNos.slice(offset, offset + chunkSize);
+            const targetedQuery = query(
+                collection(db, 'docs'),
+                where(documentId(), 'in', chunk)
+            );
+            const snapshot = await getDocs(targetedQuery);
+            const loaded = [];
+            snapshot.forEach(item => {
+                const data = item.data();
+                loaded.push({ ...data, docNo: data.docNo || item.id });
+            });
+            normalizeDates(loaded);
+
+            loaded.forEach(item => {
+                if (getDocByNo(item.docNo)) return;
+                if (item.status === '已發文') {
+                    doneDocs.push(item);
+                } else {
+                    docs.push(item);
+                }
+            });
+        }
+        return true;
+    } catch (error) {
+        console.error('Targeted import document lookup failed:', error);
+        return false;
+    }
+}
+
 function openCompare(docNo){
 const doc=getDocByNo(docNo);
 if(!doc){
@@ -1926,14 +1980,6 @@ if (isFirstSync) {
     await waitForFirstSync();
 }
 
-if (!doneDocsLoadedAll) {
-    if (fsLoader) {
-        document.getElementById('fsLoaderText').innerText = "載入歷史資料中...";
-        fsLoader.classList.remove('hidden');
-    }
-    await loadAllDoneDocs();
-}
-
 if (fsLoader) fsLoader.classList.add('hidden');
 
 if (isFirebaseError) {
@@ -2114,6 +2160,19 @@ parsedItems.forEach(item => importedDocNos.push(item.docNo));
 if(importedDocNos.length===0){
 alert('未解析到有效的發文資料，未變更任何既有資料。請確認貼上的內容格式是否正確。');
 return;
+}
+
+if (!doneDocsLoadedAll) {
+    if (fsLoader) {
+        document.getElementById('fsLoaderText').innerText = "比對本次匯入的公文編號...";
+        fsLoader.classList.remove('hidden');
+    }
+    const lookupSucceeded = await loadImportedDocMatches(importedDocNos);
+    if (fsLoader) fsLoader.classList.add('hidden');
+    if (!lookupSucceeded) {
+        alert('本次匯入的既有公文比對失敗，為避免重複新增，已中止匯入。請確認網路連線後再試一次。');
+        return;
+    }
 }
 
 const importedSet = new Set(importedDocNos.map(String));
